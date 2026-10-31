@@ -5,6 +5,8 @@ class_name WeaponModel
 ## Axes: muzzle toward -Z, +Y up, origin at the pistol grip / trigger. Markers: Muzzle, Mag, Sight, LeftHand.
 
 static func build(def: Dictionary) -> Node3D:
+	if def.has("synty") and Geo.visuals and Poly.available(def["synty"]["parts"][0]):
+		return _synty(def["synty"])
 	var root := Node3D.new()
 	var c: Array = def.get("color", [0.2, 0.2, 0.2])
 	var tint := Color(c[0], c[1], c[2])
@@ -15,6 +17,38 @@ static func build(def: Dictionary) -> Node3D:
 		"pistol": _pistol(root, tint)
 		_: _carbine(root, tint)
 	return root
+
+## Supplied Synty POLYGON Military weapon: body + parts share one origin (sights are mounted on the rail).
+## Synty space has the muzzle toward +Z, so the model is turned 180° and markers are mirrored into our -Z convention.
+static func _synty(sy: Dictionary) -> Node3D:
+	var root := Node3D.new()
+	var body := Node3D.new()
+	body.name = "Body"
+	body.rotation_degrees.y = 180.0
+	root.add_child(body)
+	var tex: String = sy["atlas"]
+	for part in sy["parts"]:
+		body.add_child(Poly.instance(part, tex))
+	for s in sy.get("sights", []):
+		var n := Poly.instance(s["part"], tex)
+		n.position = _v(s["offset"])
+		body.add_child(n)
+	var mag := Node3D.new()   # magazine under its own node so the rig can animate reloads
+	mag.name = "Mag"
+	root.add_child(mag)
+	if sy.get("mag", "") != "":
+		var mm := Poly.instance(sy["mag"], tex)
+		mm.rotation_degrees.y = 180.0
+		mag.add_child(mm)
+	var flip := func(a: Array) -> Vector3: return Vector3(-float(a[0]), float(a[1]), -float(a[2]))
+	_marker(root, "Muzzle", flip.call(sy["muzzle"]))
+	_marker(root, "Sight", Vector3(0, float(sy["sight_line"]), 0))
+	_marker(root, "Grip", flip.call(sy["grip"]))
+	_marker(root, "LeftHand", flip.call(sy["handguard"]))
+	return root
+
+static func _v(a: Array) -> Vector3:
+	return Vector3(float(a[0]), float(a[1]), float(a[2]))
 
 static func _marker(root: Node3D, name: String, pos: Vector3) -> Node3D:
 	var m := Marker3D.new()

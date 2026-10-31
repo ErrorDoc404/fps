@@ -2,16 +2,19 @@ class_name ViewModel
 ## First-person view model: a detailed WeaponModel plus gloved hands and sleeved forearms posed on the
 ## grip and handguard. Exposes the weapon's Muzzle / Mag / Sight markers for the rig (ADS alignment, reload).
 
-const SHOULDER_R := Vector3(0.14, -0.26, 0.36)
-const SHOULDER_L := Vector3(-0.42, -0.4, 0.02)
+const SHOULDER_R := Vector3(0.08, -0.3, 0.62)
+const SHOULDER_L := Vector3(-0.45, -0.42, 0.42)
 
-static func build(def: Dictionary) -> Node3D:
+static func build(def: Dictionary, with_arms := true) -> Node3D:
 	var root := WeaponModel.build(def)
+	if not with_arms:   # the rig supplies real Synty arms posed with IK
+		Geo.no_shadow(root)
+		return root
 	var sleeve := Mat.camo("tf")
 	var glove := Mat.fabric(Color(0.2, 0.19, 0.16))
 	var pistol: bool = def.get("model", "") == "pistol"
 	# right hand wraps the pistol grip
-	var rh := Vector3(0.0, -0.055, 0.02)
+	var rh: Vector3 = root.get_node("Grip").position + Vector3(0, 0.005, 0.01) if root.has_node("Grip") else Vector3(0.0, -0.055, 0.02)
 	_hand(root, rh, glove, Vector3(-16, 0, 0), true)
 	_limb(root, rh + Vector3(0.0, -0.01, 0.05), SHOULDER_R, 0.045, sleeve)
 	_cuff(root, rh + Vector3(0.0, -0.012, 0.065), SHOULDER_R, glove)

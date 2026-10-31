@@ -56,3 +56,14 @@
 - Dedicated server: `Geo.visuals = false`, so it builds no meshes, materials or textures, and the server export excludes `assets/*`
   (pck 371 KB). Fixed a first-use texture-generation stall by pre-generating materials at load (120 ms).
 - Verification: 93/93 multiplayer checks (exported build), rendered Forward+ screenshots, Windows and Linux (x86_64/ARM64) exports.
+
+## 2026-10-31: Synty POLYGON 3D integration
+- Merged `master` (commit bf37cb0 added POLYGON_Military v4 + Military_Warehouse v1 source packs). Added `core/Poly.gd` (loader,
+  atlas assignment, collider-fitted placement) and extended `tools/import_assets.py` to copy referenced FBX/PNG (atlases downscaled).
+- Characters: `SoldierModel` now drives the Synty rigged soldiers with a procedural pose solver (two-bone IK arms on the weapon,
+  IK legs with walk cycle and crouch, spine aim, finger curl, prone/downed/dead), plus head attachments on the head bone.
+- First-person arms: the user reported stretched arms (code-built forearms drawn to a fixed off-screen point). They are replaced by the
+  Synty character arms posed with IK (true arm length), torso/head/legs collapsed by bone scale, and a narrower view-model FOV.
+- Weapons: the five weapons use the Synty presets with mounted sights; markers were measured from mesh vertices.
+- Map: props, vehicles, helipad, helicopter, mountains and surfaces swapped to Synty assets on the unchanged colliders.
+- Preloading of Synty models during the loading screen removes a spawn stall. Tests: 93/93 (exported build).

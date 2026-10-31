@@ -1,229 +1,265 @@
 class_name SoldierModel
 extends Node3D
-## Third-person character presentation (client only; no character models were supplied).
-## Low-poly operators in the style of the supplied Synty portraits: camo uniform, plate carrier with pouches,
-## helmet/headgear, knee pads, gloves, backpack and a real WeaponModel in the hands. Faction and role give
-## distinct silhouettes: Task Force operators (arid camo, tan kit, class patch) vs Dominion units (urban black,
-## red armbands, skull insignia) — rifleman, heavy (bulky armour + visor), spotter (hood + gas mask), officer (beret + coat).
-## Procedural poses: stand / crouch / prone / downed / dead, walk cycle, aim pitch, firing kick.
+## Third-person character presentation (client only) using the supplied Synty POLYGON Military rigged characters.
+## The pack ships skinned characters but no animation clips, so poses are solved procedurally every frame on the
+## Synty humanoid rig: two-bone IK puts the hands on the weapon's grip / handguard and the feet on the ground
+## (walk cycle, crouch), the spine follows aim pitch, fingers curl around the weapon, and the body lies down for
+## prone / downed / dead. Static head attachments (helmets, goggles, hair) are bone-attached to `head`.
+##   Task Force:  assault / medic / recon / support  (desert atlas)
+##   Dominion:    infantry / heavy / spotter / command (urban / insurgent looks)
 
-var _hips: Node3D
-var _torso: Node3D
-var _head: Node3D
-var _arms: Node3D
-var _thigh_l: Node3D
-var _thigh_r: Node3D
-var _shin_l: Node3D
-var _shin_r: Node3D
+const CHR := "PM/Chr/"
+const ATT := "PM/Fbx/"
+const KINDS := {
+	"assault": {"model": "PM/Chr/SK_Chr_Soldier_Male_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_01_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Helmet_01_Goggles_01.fbx", "PM/Fbx/SM_Chr_Attach_Helmet_01_Goggles_01_Glass.fbx"]},
+	"medic": {"model": "PM/Chr/SK_Chr_Soldier_Female_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_01_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Helmet_11_Female.fbx"]},
+	"recon": {"model": "PM/Chr/SK_Chr_Ghillie_Male_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_01_A.png", "head": []},
+	"support": {"model": "PM/Chr/SK_Chr_Soldier_Male_02.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_01_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Helmet_07.fbx", "PM/Fbx/SM_Chr_Attach_Helmet_07_Glass.fbx", "PM/Fbx/SM_Chr_Attach_Headset_01.fbx"]},
+	"infantry": {"model": "PM/Chr/SK_Chr_Insurgent_Male_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_01_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Helmet_02.fbx"]},
+	"heavy": {"model": "PM/Chr/SK_Chr_Soldier_Male_02.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_02_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Helmet_10.fbx", "PM/Fbx/SM_Chr_Attach_Helmet_10_Visor.fbx"]},
+	"spotter": {"model": "PM/Chr/SK_Chr_Ghillie_Male_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_02_A.png", "head": []},
+	"command": {"model": "PM/Chr/SK_Chr_Leader_Male_01.fbx", "atlas": "PM/Textures/PolygonMilitary_Texture_02_A.png", "head": ["PM/Fbx/SM_Chr_Attach_Hair_Male_02.fbx"]},
+}
+
+var _body: Node3D          # the Synty instance (turned 180° so it faces -Z like the rest of the game)
+var _sk: Skeleton3D
 var _gun: Node3D
+var _weapon_def: Dictionary
+var _n := 0
+var _parent := PackedInt32Array()
+var _rest: Array[Transform3D] = []
+var _child_dir: Array[Vector3] = []     # rest offset to first child, in bone-local space
+var _b := {}                            # bone name -> index
+var _palm_local := {}                   # hand bone -> palm normal in hand-local rest space
+var _len := {}
 var _phase := 0.0
 var _kick := 0.0
 var _lie := 0.0
+var _crouch := 0.0
+var _fp_hands: Array = []
+var _fp := false               # first-person mode: wrist targets [right, left] in skeleton space
 
-## kind: "assault" | "medic" | "recon" | "support" (Task Force)  or  "infantry" | "heavy" | "spotter" | "command" (Dominion)
 func build_kind(kind: String, weapon_id: String, scale_f := 1.0) -> void:
+	var cfg: Dictionary = KINDS.get(kind, KINDS["assault"])
 	scale = Vector3.ONE * scale_f
-	var dominion := kind in ["infantry", "heavy", "spotter", "command"]
-	var uniform: Material = Mat.camo("dominion" if dominion else "tf")
-	if kind == "spotter":
-		uniform = Mat.camo("recon")
-	var vest_c := Color(0.13, 0.13, 0.14) if dominion else Color(0.56, 0.5, 0.36)
-	if kind == "recon":
-		vest_c = Color(0.36, 0.38, 0.26)
-	var vest := Mat.fabric(vest_c)
-	var pouch := Mat.fabric(vest_c.darkened(0.15))
-	var skin := Mat.skin(Color(0.74, 0.57, 0.45) if hash(kind) % 2 == 0 else Color(0.55, 0.4, 0.3))
-	var glove := Mat.fabric(Color(0.15, 0.14, 0.12))
-	var boot := Mat.rubber(Color(0.2, 0.16, 0.12) if not dominion else Color(0.07, 0.07, 0.07))
-
-	_hips = Node3D.new(); _hips.position.y = 0.95; add_child(_hips)
-	Geo.part(_hips, Vector3(0.36, 0.18, 0.22), Vector3(0, 0.0, 0), uniform, Vector3.ZERO, 0.05)          # pelvis
-	Geo.part(_hips, Vector3(0.4, 0.06, 0.25), Vector3(0, 0.08, 0), Mat.fabric(Color(0.12, 0.12, 0.1)), Vector3.ZERO, 0.02)  # belt
-	Geo.part(_hips, Vector3(0.08, 0.14, 0.12), Vector3(0.22, -0.02, 0.02), pouch, Vector3.ZERO, 0.02)     # holster / dump pouch
-	_thigh_l = _leg(-0.1, uniform, boot, kind)
-	_thigh_r = _leg(0.1, uniform, boot, kind)
-	_shin_l = _thigh_l.get_child(_thigh_l.get_child_count() - 1)
-	_shin_r = _thigh_r.get_child(_thigh_r.get_child_count() - 1)
-
-	_torso = Node3D.new(); _torso.position.y = 0.08; _hips.add_child(_torso)
-	Geo.part(_torso, Vector3(0.42, 0.5, 0.24), Vector3(0, 0.3, 0), uniform, Vector3.ZERO, 0.07)           # shirt
-	if kind == "command":
-		Geo.part(_torso, Vector3(0.46, 0.62, 0.27), Vector3(0, 0.22, 0), Mat.fabric(Color(0.24, 0.25, 0.22)), Vector3.ZERO, 0.06)  # officer coat
-		for i in 3:
-			Geo.part(_torso, Vector3(0.025, 0.025, 0.01), Vector3(0.05, 0.42 - i * 0.12, -0.14), Mat.metal(Color(0.75, 0.62, 0.3), 0.3), Vector3.ZERO, 0.005)
-		Geo.part(_torso, Vector3(0.12, 0.04, 0.02), Vector3(-0.1, 0.46, -0.14), Mat.painted(Color(0.6, 0.12, 0.1)), Vector3.ZERO, 0.0)
-	else:
-		var heavy := kind == "heavy"
-		var plate := Vector3(0.48, 0.42, 0.32) if not heavy else Vector3(0.56, 0.5, 0.38)
-		Geo.part(_torso, plate, Vector3(0, 0.32, 0), vest if not heavy else Mat.painted(Color(0.2, 0.21, 0.22), 0.7), Vector3.ZERO, 0.05)
-		if heavy:   # shoulder / collar armour
-			for s in [-1, 1]:
-				Geo.part(_torso, Vector3(0.16, 0.1, 0.26), Vector3(s * 0.3, 0.5, 0), Mat.painted(Color(0.18, 0.19, 0.2), 0.7), Vector3(0, 0, s * 20), 0.04)
-			Geo.part(_torso, Vector3(0.36, 0.1, 0.32), Vector3(0, 0.58, 0), Mat.painted(Color(0.18, 0.19, 0.2), 0.7), Vector3.ZERO, 0.04)
-			Geo.part(_torso, Vector3(0.3, 0.2, 0.06), Vector3(0, 0.0, -0.17), Mat.painted(Color(0.2, 0.21, 0.22), 0.7), Vector3.ZERO, 0.03)  # groin plate
-		for i in 3:   # magazine pouches across the front
-			Geo.part(_torso, Vector3(0.1, 0.13, 0.06), Vector3(-0.13 + i * 0.13, 0.22, -plate.z * 0.5 - 0.03), pouch, Vector3.ZERO, 0.02)
-		Geo.part(_torso, Vector3(0.12, 0.08, 0.05), Vector3(0.12, 0.42, -plate.z * 0.5 - 0.025), pouch, Vector3.ZERO, 0.015)  # admin pouch
-		Geo.part(_torso, Vector3(0.04, 0.16, 0.04), Vector3(-0.17, 0.46, -plate.z * 0.5 - 0.02), Mat.polymer(), Vector3.ZERO, 0.01)  # radio
-		Geo.tube(_torso, 0.006, 0.18, Vector3(-0.17, 0.62, -plate.z * 0.5 - 0.02), Mat.polymer(), Vector3.ZERO, 4)                  # antenna
-	# backpack / radio pack
-	var pack := Vector3(0.34, 0.4, 0.16) if kind in ["support", "medic", "spotter"] else Vector3(0.3, 0.3, 0.12)
-	if kind != "command":
-		Geo.part(_torso, pack, Vector3(0, 0.34, 0.2 + pack.z * 0.5 - 0.06), Mat.fabric(vest_c.darkened(0.1)), Vector3.ZERO, 0.05)
-		Geo.part(_torso, Vector3(pack.x * 0.8, 0.1, 0.06), Vector3(0, 0.2, 0.2 + pack.z - 0.04), pouch, Vector3.ZERO, 0.02)
-		if kind == "support":
-			Geo.part(_torso, Vector3(0.3, 0.12, 0.12), Vector3(0, 0.6, 0.24), Mat.painted(Color(0.3, 0.34, 0.24)), Vector3.ZERO, 0.02)  # ammo can
-	# insignia
-	if dominion:
-		_patch(_torso, UiKit.BADGE_DOMINION, Vector3(0, 0.36, -0.2), 0.14, Color(0.85, 0.82, 0.75), 0.0)
-	# neck + head
-	Geo.part(_torso, Vector3(0.12, 0.08, 0.12), Vector3(0, 0.6, 0), skin, Vector3.ZERO, 0.03)
-	_head = Node3D.new(); _head.position.y = 0.66; _torso.add_child(_head)
-	Geo.part(_head, Vector3(0.19, 0.23, 0.21), Vector3(0, 0.11, 0), skin, Vector3.ZERO, 0.05)
-	Geo.part(_head, Vector3(0.06, 0.05, 0.04), Vector3(0, 0.08, -0.115), skin, Vector3.ZERO, 0.015)          # nose
-	_headgear(kind, dominion, vest_c)
-	# arms + weapon
-	_arms = Node3D.new(); _arms.position = Vector3(0, 0.5, 0); _torso.add_child(_arms)
-	_gun = WeaponModel.build(GameData.weapon(weapon_id))
-	_gun.position = Vector3(0.1, -0.08, -0.32)
-	_arms.add_child(_gun)
-	var sleeve: Material = uniform if kind != "command" else Mat.fabric(Color(0.24, 0.25, 0.22))
-	var grip: Vector3 = _gun.position + Vector3(0, -0.05, 0.02)
-	var lh: Vector3 = _gun.position + (_gun.get_node("LeftHand").position if _gun.has_node("LeftHand") else Vector3(0, 0, -0.3))
-	_arm(Vector3(0.24, 0.0, 0.0), grip, sleeve, glove, kind == "heavy")
-	_arm(Vector3(-0.24, 0.0, 0.0), lh + Vector3(-0.02, -0.03, 0), sleeve, glove, kind == "heavy")
-	if not dominion:
-		_patch(_arms, _class_patch(kind), Vector3(-0.29, -0.06, 0.02), 0.08, Color.WHITE, -90.0)
-	Geo.no_shadow(_gun)
-
-func _leg(x: float, uniform: Material, boot: Material, kind: String) -> Node3D:
-	var thigh := Node3D.new()
-	thigh.position = Vector3(x, -0.04, 0)
-	_hips.add_child(thigh)
-	Geo.part(thigh, Vector3(0.16, 0.44, 0.18), Vector3(0, -0.22, 0), uniform, Vector3.ZERO, 0.05)
-	if kind != "command":
-		Geo.part(thigh, Vector3(0.06, 0.12, 0.12), Vector3(x * 0.9, -0.22, 0), Mat.fabric(Color(0.2, 0.2, 0.18)), Vector3.ZERO, 0.02)  # cargo pocket
-	var shin := Node3D.new()
-	shin.position = Vector3(0, -0.44, 0)
-	thigh.add_child(shin)
-	Geo.part(shin, Vector3(0.14, 0.42, 0.16), Vector3(0, -0.21, 0.01), uniform, Vector3.ZERO, 0.045)
-	Geo.part(shin, Vector3(0.13, 0.12, 0.06), Vector3(0, -0.02, -0.08), Mat.polymer(Color(0.12, 0.12, 0.12)), Vector3.ZERO, 0.025)  # knee pad
-	Geo.part(shin, Vector3(0.15, 0.12, 0.27), Vector3(0, -0.44, -0.04), boot, Vector3.ZERO, 0.03)          # boot
-	return thigh
-
-func _arm(shoulder: Vector3, hand: Vector3, sleeve: Material, glove: Material, bulky: bool) -> void:
-	var elbow := (shoulder + hand) * 0.5 + Vector3(0, -0.12, 0.06)
-	_seg(shoulder, elbow, 0.065 if not bulky else 0.085, sleeve)
-	_seg(elbow, hand, 0.055, sleeve)
-	var g := Geo.part(_arms, Vector3(0.07, 0.08, 0.09), hand, glove, Vector3.ZERO, 0.02)
-	if bulky:
-		Geo.part(_arms, Vector3(0.15, 0.1, 0.16), shoulder + Vector3(0, 0.05, 0), Mat.painted(Color(0.18, 0.19, 0.2), 0.7), Vector3.ZERO, 0.04)
-
-func _seg(a: Vector3, b: Vector3, r: float, m: Material) -> void:
-	var n := Node3D.new()
-	_arms.add_child(n)
-	n.position = (a + b) * 0.5
-	if not (b - a).normalized().is_equal_approx(Vector3.UP) and not (b - a).normalized().is_equal_approx(Vector3.DOWN):
-		n.basis = Basis.looking_at(b - a, Vector3.UP)
-	Geo.part(n, Vector3(r * 2.0, r * 2.0, a.distance_to(b) + r), Vector3.ZERO, m, Vector3.ZERO, r * 0.4)
-
-func _headgear(kind: String, dominion: bool, vest_c: Color) -> void:
-	match kind:
-		"command":
-			Geo.part(_head, Vector3(0.23, 0.06, 0.24), Vector3(0.02, 0.24, 0.0), Mat.fabric(Color(0.5, 0.08, 0.07)), Vector3(0, 0, -10), 0.03)  # beret
-			Geo.part(_head, Vector3(0.18, 0.035, 0.02), Vector3(0, 0.13, -0.11), Mat.polymer(Color(0.05, 0.05, 0.05)), Vector3.ZERO, 0.008)    # sunglasses
-		"spotter":
-			Geo.part(_head, Vector3(0.25, 0.27, 0.25), Vector3(0, 0.13, 0.02), Mat.fabric(Color(0.27, 0.3, 0.2)), Vector3.ZERO, 0.08)         # hood
-			Geo.part(_head, Vector3(0.15, 0.12, 0.07), Vector3(0, 0.07, -0.12), Mat.rubber(Color(0.12, 0.12, 0.12)), Vector3.ZERO, 0.03)       # gas mask
-			for s in [-1, 1]:
-				Geo.tube(_head, 0.03, 0.02, Vector3(s * 0.045, 0.12, -0.15), Mat.glass(Color(0.2, 0.3, 0.3, 0.8)), Vector3(90, 0, 0), 10)
-			Geo.tube(_head, 0.035, 0.05, Vector3(0, 0.03, -0.17), Mat.polymer(), Vector3(90, 0, 0), 10)                                       # filter
-		"heavy":
-			Geo.part(_head, Vector3(0.27, 0.27, 0.28), Vector3(0, 0.13, 0.0), Mat.painted(Color(0.17, 0.18, 0.19), 0.6), Vector3.ZERO, 0.08)
-			Geo.part(_head, Vector3(0.22, 0.12, 0.03), Vector3(0, 0.1, -0.14), Mat.glass(Color(0.1, 0.12, 0.12, 0.85)), Vector3.ZERO, 0.02)    # visor
-		_:
-			var hel := Mat.painted(Color(0.14, 0.14, 0.15) if dominion else vest_c.lightened(0.05), 0.75)
-			if dominion:
-				Geo.part(_head, Vector3(0.2, 0.2, 0.22), Vector3(0, 0.1, 0.0), Mat.fabric(Color(0.08, 0.08, 0.08)), Vector3.ZERO, 0.05)   # balaclava
-			Geo.part(_head, Vector3(0.27, 0.13, 0.28), Vector3(0, 0.25, 0.015), hel, Vector3.ZERO, 0.05)                                    # helmet shell
-			Geo.part(_head, Vector3(0.28, 0.05, 0.2), Vector3(0, 0.2, 0.05), hel, Vector3.ZERO, 0.02)
-			for s in [-1, 1]:
-				Geo.part(_head, Vector3(0.04, 0.08, 0.08), Vector3(s * 0.12, 0.12, 0.0), Mat.polymer(Color(0.15, 0.15, 0.13)), Vector3.ZERO, 0.02)  # ear pro
-			if kind == "recon":
-				Geo.part(_head, Vector3(0.08, 0.06, 0.06), Vector3(0, 0.31, -0.12), Mat.polymer(), Vector3.ZERO, 0.01)                       # NVG mount
-				for s in [-1, 1]:
-					Geo.tube(_head, 0.022, 0.07, Vector3(s * 0.03, 0.28, -0.16), Mat.polymer(), Vector3(90, 0, 0), 8)
-			elif not dominion:
-				Geo.part(_head, Vector3(0.2, 0.05, 0.04), Vector3(0, 0.29, -0.12), Mat.polymer(Color(0.12, 0.12, 0.1)), Vector3.ZERO, 0.015)  # goggles on helmet
-				Geo.part(_head, Vector3(0.17, 0.035, 0.03), Vector3(0, 0.29, -0.14), Mat.glass(Color(0.6, 0.45, 0.2, 0.7)), Vector3.ZERO, 0.01)
-			else:
-				Geo.part(_head, Vector3(0.16, 0.04, 0.02), Vector3(0, 0.13, -0.115), Mat.polymer(Color(0.05, 0.05, 0.05)), Vector3.ZERO, 0.008)
-
-static func _class_patch(kind: String) -> String:
-	match kind:
-		"medic": return "Icons_Resources/ICON_SM_Chr_Patch_Medic_02_BattleRoyale.png"
-		"recon": return "Badges/SPR_MilitaryCombat_Badge_Element_Target_01_Silver.png"
-		"support": return "Badges/SPR_MilitaryCombat_Badge_Element_Crate_01_Silver.png"
-	return "Badges/SPR_MilitaryCombat_Badge_Element_Rifles_01_Silver.png"
-
-func _patch(parent: Node3D, rel: String, pos: Vector3, size: float, tint: Color, rot_y: float) -> void:
-	var s := Sprite3D.new()
-	s.texture = UiKit.tex(rel)
-	if s.texture == null:
+	_body = Poly.instance(cfg["model"], cfg["atlas"])
+	_body.rotation_degrees.y = 180.0
+	add_child(_body)
+	_sk = _body.find_child("Skeleton3D", true, false)
+	if _sk == null:
 		return
-	s.pixel_size = size / float(s.texture.get_width())
-	s.modulate = tint
-	s.position = pos
-	s.rotation_degrees.y = rot_y + 180.0
-	s.shaded = true
-	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	parent.add_child(s)
+	_n = _sk.get_bone_count()
+	_parent.resize(_n)
+	_child_dir.resize(_n)
+	_rest.resize(_n)
+	for i in _n:
+		_parent[i] = _sk.get_bone_parent(i)
+		_rest[i] = _sk.get_bone_rest(i)
+		_b[_sk.get_bone_name(i)] = i
+		_child_dir[i] = Vector3.ZERO
+	for i in _n:
+		var p := _parent[i]
+		if p >= 0 and _child_dir[p] == Vector3.ZERO:
+			_child_dir[p] = _rest[i].origin
+	for i in _n:   # bones without children (finger tips) keep their parent's direction
+		if _child_dir[i] == Vector3.ZERO and _parent[i] >= 0:
+			_child_dir[i] = _rest[_parent[i]].basis.inverse() * _child_dir[_parent[i]]
+	for h in ["Hand_L", "Hand_R"]:
+		var g := _sk.get_bone_global_rest(_b[h])
+		_palm_local[_b[h]] = g.basis.inverse() * Vector3.DOWN   # T-pose palms face down
+	for s in ["L", "R"]:
+		var lo := "l" if s == "L" else "r"
+		_len["arm_a" + s] = _rest[_b["lowerarm_" + lo]].origin.length()
+		_len["arm_b" + s] = _rest[_b["Hand_" + s]].origin.length()
+		_len["leg_a" + s] = _rest[_b["calf_" + lo]].origin.length()
+		_len["leg_b" + s] = _rest[_b["Foot_" + s]].origin.length()
+	# head attachments are modelled in place on the T-pose: attach to `head` with the inverse rest transform
+	var att := BoneAttachment3D.new()
+	att.bone_name = "head"
+	_sk.add_child(att)
+	for rel in cfg["head"]:   # attachment meshes are authored relative to the head bone
+		var m := Poly.instance(rel, cfg["atlas"])
+		att.add_child(m)
+	if weapon_id != "":
+		set_weapon(weapon_id)
 
-## Swaps the carried weapon model (remote operators switching primary/secondary).
+## First-person arms: same Synty character, head/neck and legs collapsed (bone scale) so only the
+## arms, hands and sleeves are visible from the camera. Posed every frame with pose_fp().
+func build_fp(kind: String) -> void:
+	build_kind(kind, "")
+	if _sk == null:
+		return
+	_fp = true   # torso / head / legs are collapsed in pose(); arms keep their true shoulders
+	Geo.no_shadow(self)
+
+## Eye point of this model in its own (parent) space, used to put the camera at the character's eyes.
+func eye_offset() -> Vector3:
+	return Basis(Vector3.UP, PI) * _sk.get_bone_global_rest(_b["eyes"]).origin
+
+## wrist_r / wrist_l are given in this node's parent space; arms reach them with IK (never longer than the real arm).
+func pose_fp(dt: float, wrist_r: Vector3, wrist_l: Vector3) -> void:
+	if _sk == null:
+		return
+	var to_skel := (transform * _body.transform).affine_inverse()
+	_fp_hands = [to_skel * wrist_r, to_skel * wrist_l]
+	pose(dt, 0, 0.0, 0.0, "alive")
+
 func set_weapon(weapon_id: String) -> void:
 	var def := GameData.weapon(weapon_id)
-	if def.is_empty() or _gun == null:
+	if def.is_empty() or _body == null:
 		return
-	var pos := _gun.position
-	var vis := _gun.visible
-	_gun.queue_free()
+	var vis := _gun.visible if _gun else true
+	if _gun:
+		_gun.queue_free()
+	_weapon_def = def
 	_gun = WeaponModel.build(def)
-	_gun.position = pos
 	_gun.visible = vis
-	_arms.add_child(_gun)
-	Geo.no_shadow(_gun)
+	_body.add_child(_gun)
 
 func set_gun_visible(v: bool) -> void:
-	_gun.visible = v
+	if _gun:
+		_gun.visible = v
 
 func kick() -> void:
 	_kick = 1.0
 
+# ------------------------------------------------------------------ pose solver
+static func _ik(s: Vector3, t: Vector3, a: float, b: float, pole: Vector3) -> Array:
+	var d := t - s
+	var l := clampf(d.length(), 0.02, a + b - 0.002)
+	var dir := d.normalized()
+	var ca := clampf((a * a + l * l - b * b) / (2.0 * a * l), -1.0, 1.0)
+	var ang := acos(ca)
+	var pp := (pole - dir * pole.dot(dir))
+	pp = pp.normalized() if pp.length() > 0.0001 else Vector3.UP
+	var elbow := s + (dir * cos(ang) + pp * sin(ang)) * a
+	return [elbow, s + dir * l]
+
+## Rotates global transform `g` of bone i so that its child direction points along `want` (skeleton space).
+func _aim(i: int, g: Transform3D, want: Vector3) -> Transform3D:
+	var d0 := (g.basis * _child_dir[i]).normalized()
+	var d1 := want.normalized()
+	if d0.dot(d1) > 0.99999:
+		return g
+	var axis := d0.cross(d1)
+	if axis.length() < 0.00001:
+		axis = Vector3.UP if absf(d0.dot(Vector3.UP)) < 0.9 else Vector3.RIGHT
+	g.basis = Basis(axis.normalized(), d0.angle_to(d1)) * g.basis
+	return g
+
 ## stance: 0 stand, 1 crouch, 2 prone; state: "alive" | "downed" | "dead"
 func pose(dt: float, stance: int, aim_pitch: float, speed: float, state := "alive") -> void:
-	_phase += dt * (2.0 + speed * 2.4)
-	_kick = maxf(0.0, _kick - dt * 8.0)
+	if _sk == null:
+		return
 	var moving := clampf(speed / 4.0, 0.0, 1.0)
-	var swing: float = sin(_phase) * moving * 0.55
-	var target_lie := 0.0
-	var hip_y := 0.95
-	var knee := 0.0
-	if state == "dead" or state == "downed" or stance == 2:
-		target_lie = 1.0
-	elif stance == 1:
-		hip_y = 0.62
-		knee = 1.0
-	_lie = move_toward(_lie, target_lie, dt * 3.0)
-	_hips.position.y = lerpf(hip_y, 0.2, _lie) + absf(sin(_phase)) * moving * 0.03 * (1.0 - _lie)
-	_hips.rotation.x = lerpf(0.0, -PI / 2.0, _lie)
-	_hips.rotation.z = (0.6 * _lie) if state != "alive" else 0.0
-	_thigh_l.rotation.x = swing - knee * 0.9
-	_thigh_r.rotation.x = -swing - knee * 0.2
-	_shin_l.rotation.x = maxf(0.0, -swing) * 0.9 + knee * 1.6
-	_shin_r.rotation.x = maxf(0.0, swing) * 0.9 + knee * 0.9
-	_torso.rotation.x = -knee * 0.2 - moving * 0.08
-	var aim := 0.0 if state != "alive" else aim_pitch
-	if _lie > 0.5 and state == "alive":
-		aim = clampf(aim_pitch, -0.3, 0.6) + PI / 2.0
-	_arms.rotation.x = aim + _kick * 0.12 - (0.0 if state == "alive" else 1.2)
-	_head.rotation.x = clampf(aim_pitch, -0.6, 0.6) * (1.0 - _lie)
+	_phase += dt * (3.0 + speed * 2.2)
+	_kick = maxf(0.0, _kick - dt * 8.0)
+	var lying := state != "alive" or stance == 2
+	_lie = move_toward(_lie, 1.0 if lying else 0.0, dt * 3.0)
+	_crouch = move_toward(_crouch, 1.0 if (stance == 1 and not lying) else 0.0, dt * 4.0)
+	# body orientation for prone (face down) / downed + dead (on the back)
+	if state == "alive":
+		_body.rotation = Vector3(-PI / 2.0 * _lie, PI, 0)
+		_body.position = Vector3(0, 0.12 * _lie, 0.85 * _lie)
+	else:
+		_body.rotation = Vector3(PI / 2.0 * _lie, PI, 0.0)
+		_body.position = Vector3(0, 0.15 * _lie, -0.85 * _lie)
+	var armed := state == "alive" and (_gun != null or _fp_hands.size() == 2)
+	# aim frame in skeleton space (+Z forward): pitch up rotates the muzzle toward +Y
+	var gun_pitch := aim_pitch if stance != 2 else clampf(aim_pitch, -0.3, 0.5) + PI / 2.0
+	var aim_b := Basis(Vector3.RIGHT, -gun_pitch - _kick * 0.08)
+	var pelvis_drop := 0.38 * _crouch + absf(sin(_phase)) * 0.025 * moving * (1.0 - _crouch)
+	var glob: Array[Transform3D] = []
+	glob.resize(_n)
+	var glob_true: Array[Transform3D] = []   # globals before first-person collapsing (true shoulder positions)
+	glob_true.resize(_n)
+	var targets := {}
+	var palm := {}
+	for i in _n:
+		var p := _parent[i]
+		var pg := glob_true[p] if p >= 0 else Transform3D.IDENTITY   # solve on the true (uncollapsed) skeleton
+		var bn := _sk.get_bone_name(i)
+		var g := pg * _rest[i]
+		match bn:
+			"Pelvis":
+				g.origin.y -= pelvis_drop
+				g.basis = Basis(Vector3.RIGHT, 0.2 * _crouch) * g.basis
+			"spine_02", "spine_03":
+				if stance != 2 and state == "alive":
+					g.basis = Basis(Vector3.RIGHT, -aim_pitch * 0.35 + 0.08 * moving) * g.basis
+			"neck_01":
+				if state == "alive" and stance != 2:
+					g.basis = Basis(Vector3.RIGHT, -aim_pitch * 0.25) * g.basis
+			"UpperArm_R", "UpperArm_L":
+				var side := "R" if bn.ends_with("R") else "L"
+				var t: Vector3
+				var pole: Vector3
+				if armed and _fp_hands.size() == 2:
+					t = _fp_hands[0 if side == "R" else 1]
+					pole = Vector3(-0.8 if side == "R" else 0.8, -1.0, -0.6)
+				elif armed:
+					if not targets.has("gun"):
+						var chest := glob[_b["spine_03"]].origin
+						var gx := Transform3D(aim_b * Basis(Vector3.UP, PI), chest + aim_b * Vector3(-0.1, 0.02, 0.3))
+						if stance == 2:
+							gx.origin = chest + aim_b * Vector3(-0.08, 0.02, 0.35)
+						targets["gun"] = gx
+						_gun.transform = gx
+					var gx2: Transform3D = targets["gun"]
+					var mk := "Grip" if side == "R" else "LeftHand"
+					var hand_pt: Vector3 = gx2 * (_gun.get_node(mk).position if _gun.has_node(mk) else Vector3.ZERO)
+					t = hand_pt + aim_b * Vector3(0, -0.02, -0.07)    # wrist sits behind the palm
+					pole = Vector3(-0.7 if side == "R" else 0.5, -1.0, -0.2)
+				else:
+					var sh := g.origin
+					var downed := state == "downed"
+					t = sh + Vector3(0.12 if side == "L" else -0.12, -0.5, 0.18 if downed else 0.05)
+					pole = Vector3(0, 0, -1)
+				var sol := _ik(g.origin, t, _len["arm_a" + side], _len["arm_b" + side], pole)
+				targets["elbow" + side] = sol[0]
+				targets["wrist" + side] = sol[1]
+				g = _aim(i, g, sol[0] - g.origin)
+			"lowerarm_r", "lowerarm_l":
+				var side2 := "R" if bn.ends_with("r") else "L"
+				g = _aim(i, g, targets["wrist" + side2] - g.origin)
+			"Hand_R", "Hand_L":
+				palm[i] = g.basis * _palm_local[i]
+			"Thigh_R", "Thigh_L":
+				var side3 := "R" if bn.ends_with("R") else "L"
+				var sgn := 1.0 if side3 == "L" else -1.0
+				var step := sin(_phase + (0.0 if side3 == "L" else PI))
+				var foot := Vector3(g.origin.x + sgn * 0.02, 0.07, g.origin.z + step * 0.22 * moving)
+				foot.y += maxf(0.0, cos(_phase + (0.0 if side3 == "L" else PI))) * 0.09 * moving
+				if _crouch > 0.0:
+					foot.z = lerpf(foot.z, g.origin.z + (0.28 if side3 == "L" else -0.18), _crouch)
+				if lying:
+					foot = g.origin + Vector3(sgn * 0.06, -0.78, 0.02 if state == "alive" else 0.1)
+				var lsol := _ik(g.origin, foot, _len["leg_a" + side3], _len["leg_b" + side3], Vector3(0, 0, 1))
+				targets["knee" + side3] = lsol[0]
+				targets["ankle" + side3] = lsol[1]
+				g = _aim(i, g, lsol[0] - g.origin)
+			"calf_r", "calf_l":
+				var side4 := "R" if bn.ends_with("r") else "L"
+				g = _aim(i, g, targets["ankle" + side4] - g.origin)
+			_:
+				if armed and (bn.begins_with("finger") or bn.begins_with("indexFinger") or bn.begins_with("thumb")):
+					var hand_i: int = _b["Hand_L"] if bn.ends_with("_l") else _b["Hand_R"]
+					if palm.has(hand_i):
+						var d0 := (g.basis * _child_dir[i]).normalized()
+						var curl := 0.55 if bn.begins_with("thumb") else 0.85
+						g = _aim(i, g, d0 * cos(curl) + (palm[hand_i] as Vector3) * sin(curl))
+		glob_true[i] = g
+		# First person: chest/head and legs collapse to nothing; clavicles re-expand so the arms stay full size
+		# at their true shoulders. `glob` holds the actually-posed globals.
+		var a := g
+		if _fp:
+			if bn in ["spine_02", "Thigh_L", "Thigh_R"]:
+				a = Transform3D(g.basis * Basis.from_scale(Vector3.ONE * 0.005), g.origin)
+			elif bn != "clavicle_l" and bn != "clavicle_r" and p >= 0:
+				a = glob[p] * (pg.affine_inverse() * g)
+		glob[i] = a
+		var apg := glob[p] if p >= 0 else Transform3D.IDENTITY
+		var local := apg.affine_inverse() * a
+		_sk.set_bone_pose_position(i, local.origin)
+		_sk.set_bone_pose_rotation(i, local.basis.orthonormalized().get_rotation_quaternion())
+		_sk.set_bone_pose_scale(i, local.basis.get_scale())

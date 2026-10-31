@@ -58,6 +58,7 @@ func _build_map(with_visuals: bool) -> void:
 		add_child(c)
 	if with_visuals:
 		Mat.prewarm()
+		Poly.preload_gameplay_models()
 		_environment()
 
 func _environment() -> void:

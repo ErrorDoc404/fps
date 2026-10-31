@@ -1,10 +1,11 @@
 # Known Issues & Limitations
 
 ## Content / presentation
-- **No 3D art or audio was supplied** (the pack is 2D only). Environments, operators, enemies, weapons and arms are detailed procedural
-  low-poly meshes with procedural PBR materials, and use supplied sprites for decals, signage and insignia. They are not authored models.
-  Characters use procedural poses, not skeletal rigs, so limbs are rigid segments. Sounds are procedurally synthesised.
-  Importing real Synty POLYGON packs (characters, weapons, environment FBX + texture atlas) is the main remaining visual upgrade.
+- 3D art now comes from the supplied Synty POLYGON Military + Warehouse packs (see ASSET_MAPPING.md). The packs contain **no
+  animation clips**, so characters are posed procedurally (IK arms and legs, walk cycle, crouch, prone, downed and dead) rather than
+  animated. Motion is functional, not mocap-quality. Audio is still procedurally synthesised (no audio was supplied).
+- First-person arms are the Synty character with chest, head and legs collapsed. In extreme ADS / sprint poses the hands can sit a few
+  centimetres off the weapon, because IK never stretches an arm past its real length.
 - First-person reload is a procedural tilt + magazine drop; there are no hand/finger animations.
 - Volumetric fog, SSAO/SSIL and glow apply in the Forward+ renderer (Windows/Vulkan). They were verified with lavapipe (software Vulkan)
   under Xvfb, at low frame rates. Real-GPU performance has not been profiled yet.

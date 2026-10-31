@@ -1,12 +1,25 @@
 class_name Props
-## Detailed code-built props in the Synty low-poly military style (no 3D prop models were supplied).
-## Every function adds presentation meshes only; callers create colliders separately so the dedicated
+## Prop presentation for the maps. Uses the supplied Synty POLYGON Military / Warehouse models (via Poly) fitted to
+## the existing gameplay colliders; the code-built versions below remain only as fallbacks (e.g. forklift, tanks,
+## which have no matching Synty model). Presentation only: callers create colliders separately so the dedicated
 ## server (Geo.visuals == false) builds identical collision without any meshes or materials.
+
+const A := "PM/Textures/PolygonMilitary_Texture_01_A.png"
+const VEH := "PM/Textures/PolygonMilitary_Land_Vehicles_05.png"
+
+## Places a Synty model fitted to a box centred on `p` (or standing on `p` when fit.y == 0). Returns false if missing.
+static func _sy(p: Node3D, rel: String, fit: Vector3, stretch := false, tex := A, offset := Vector3.ZERO) -> bool:
+	if not Geo.visuals or not Poly.available(rel):
+		return false
+	Poly.place(p, rel, tex, offset, 0.0, fit, stretch)
+	return true
 
 const C_CONTAINER := [Color(0.52, 0.2, 0.15), Color(0.2, 0.33, 0.45), Color(0.27, 0.36, 0.24), Color(0.62, 0.45, 0.16), Color(0.42, 0.42, 0.43)]
 
 static func container(p: Node3D, color: Color) -> void:
 	if not Geo.visuals:
+		return
+	if _sy(p, "PW/FBX/SM_Prop_Shipping_Container_01.fbx", Vector3(2.5, 2.6, 6.1), true):
 		return
 	var body := Mat.corrugated(color)
 	var frame := Mat.painted(color.darkened(0.25))
@@ -29,6 +42,14 @@ static func container(p: Node3D, color: Color) -> void:
 static func barrel(p: Node3D, color: Color, tipped := false) -> void:
 	if not Geo.visuals:
 		return
+	var bh := Node3D.new()
+	p.add_child(bh)
+	if tipped:
+		bh.rotation_degrees = Vector3(90, 0, 0)
+		bh.position = Vector3(0, -0.0, -0.45)
+	if _sy(bh, "PM/Fbx/SM_Prop_Barrel_01.fbx", Vector3(0.62, 0, 0.62)):
+		return
+	bh.queue_free()
 	var b := Node3D.new()
 	p.add_child(b)
 	if tipped:
@@ -42,6 +63,16 @@ static func barrel(p: Node3D, color: Color, tipped := false) -> void:
 static func pallet(p: Node3D, pos: Vector3, load := 0) -> void:
 	if not Geo.visuals:
 		return
+	var ph := Node3D.new()
+	ph.position = pos
+	p.add_child(ph)
+	if _sy(ph, "PM/Fbx/SM_Prop_Pallet_01.fbx", Vector3(1.2, 0, 1.2)):
+		if load == 1:
+			_sy(ph, "PM/Fbx/SM_Prop_Sack_Large_01.fbx", Vector3(1.1, 0, 1.1), false, A, Vector3(0, 0.14, 0))
+		elif load == 2:
+			_sy(ph, "PM/Fbx/SM_Prop_Crate_Wood_01.fbx", Vector3(1.1, 0, 1.1), false, A, Vector3(0, 0.14, 0))
+		return
+	ph.queue_free()
 	var n := Node3D.new()
 	n.position = pos
 	p.add_child(n)
@@ -60,6 +91,8 @@ static func pallet(p: Node3D, pos: Vector3, load := 0) -> void:
 static func crate(p: Node3D, size: float, military := true) -> void:
 	if not Geo.visuals:
 		return
+	if _sy(p, "PM/Fbx/SM_Prop_Crate_Cube_01.fbx" if military else "PM/Fbx/SM_Prop_Crate_Wood_01.fbx", Vector3.ONE * size):
+		return
 	var body := Mat.painted(Color(0.33, 0.36, 0.25)) if military else Mat.wood()
 	Geo.part(p, Vector3.ONE * size * 0.96, Vector3.ZERO, body, Vector3.ZERO, 0.03)
 	var trim := Mat.wood(Color(0.45, 0.36, 0.24)) if not military else Mat.painted(Color(0.24, 0.26, 0.18))
@@ -74,6 +107,8 @@ static func crate(p: Node3D, size: float, military := true) -> void:
 static func jersey_barrier(p: Node3D, stripes := true) -> void:
 	if not Geo.visuals:
 		return
+	if _sy(p, "PM/Fbx/SM_Prop_Barrier_01.fbx", Vector3(3.2, 0.95, 0.62), true):
+		return
 	var c := Mat.concrete(Color(0.7, 0.68, 0.63))
 	Geo.part(p, Vector3(3.2, 0.3, 0.62), Vector3(0, -0.32, 0), c, Vector3.ZERO, 0.03)
 	Geo.part(p, Vector3(3.2, 0.4, 0.4), Vector3(0, -0.05, 0), c, Vector3.ZERO, 0.05)
@@ -84,6 +119,8 @@ static func jersey_barrier(p: Node3D, stripes := true) -> void:
 
 static func sandbag_wall(p: Node3D, length: float, rows := 3) -> void:
 	if not Geo.visuals:
+		return
+	if rows >= 3 and _sy(p, "PM/Fbx/SM_Prop_Barrier_Base_Row_01.fbx", Vector3(length, 1.1, 1.0), true):
 		return
 	var m := Mat.fabric(Color(0.58, 0.52, 0.38))
 	var n := int(length / 0.55)
@@ -97,6 +134,8 @@ static func sandbag_wall(p: Node3D, length: float, rows := 3) -> void:
 static func light_pole(p: Node3D, height := 6.0) -> void:
 	if not Geo.visuals:
 		return
+	if _sy(p, "PM/Fbx/SM_Prop_LightPole_01.fbx", Vector3(1.0, height, 1.0), false, A, Vector3(0, height * 0.5, 0)):
+		return
 	Geo.tube(p, 0.12, height, Vector3(0, height * 0.5, 0), Mat.painted(Color(0.42, 0.44, 0.42)), Vector3.ZERO, 8, 0.08)
 	Geo.part(p, Vector3(0.5, 0.25, 0.5), Vector3(0, 0.12, 0), Mat.concrete(), Vector3.ZERO, 0.04)
 	Geo.part(p, Vector3(1.2, 0.08, 0.08), Vector3(0.5, height - 0.1, 0), Mat.metal())
@@ -105,6 +144,8 @@ static func light_pole(p: Node3D, height := 6.0) -> void:
 
 static func truck(p: Node3D, color: Color, canvas := true) -> void:
 	if not Geo.visuals:
+		return
+	if _sy(p, "PM/Fbx/SM_Veh_Truck_01.fbx", Vector3(3.1, 2.75, 6.9), false, VEH):
 		return
 	var paint := Mat.painted(color, 0.7)
 	var dark := Mat.painted(color.darkened(0.35))
@@ -147,6 +188,8 @@ static func forklift(p: Node3D) -> void:
 static func generator(p: Node3D) -> void:
 	if not Geo.visuals:
 		return
+	if _sy(p, "PM/Fbx/SM_Prop_Generator_Large_01.fbx", Vector3(2.2, 1.3, 1.1)):
+		return
 	Geo.part(p, Vector3(2.2, 1.3, 1.1), Vector3(0, 0, 0), Mat.painted(Color(0.32, 0.38, 0.26)), Vector3.ZERO, 0.06)
 	for i in 6:
 		Geo.part(p, Vector3(0.02, 0.6, 0.06), Vector3(-0.6 + i * 0.12, 0.1, 0.56), Mat.metal(Color(0.2, 0.2, 0.2)))
@@ -171,6 +214,8 @@ static func tank(p: Node3D, radius: float, height: float) -> void:
 
 static func tower(p: Node3D) -> void:
 	if not Geo.visuals:
+		return
+	if _sy(p, "PM/Fbx/SM_Bld_GuardTower_01.fbx", Vector3(3.9, 0, 3.9)):
 		return
 	var w := Mat.wood(Color(0.5, 0.4, 0.28))
 	for x in [-1.5, 1.5]:
@@ -197,11 +242,17 @@ static func sandbag_wall_at(p: Node3D, pos: Vector3, length: float) -> void:
 static func tire_stack(p: Node3D, count: int) -> void:
 	if not Geo.visuals:
 		return
+	if Poly.available("PM/Fbx/SM_Prop_Tire_01.fbx"):
+		for i in count:
+			_sy(p, "PM/Fbx/SM_Prop_Tire_01.fbx", Vector3(0.85, 0, 0.85), false, A, Vector3(0.03 * (i % 2), i * 0.26, 0))
+		return
 	for i in count:
 		Geo.tube(p, 0.42, 0.24, Vector3(0.04 * (i % 2), 0.12 + i * 0.24, 0.0), Mat.rubber(), Vector3.ZERO, 12)
 
 static func cable_spool(p: Node3D) -> void:
 	if not Geo.visuals:
+		return
+	if _sy(p, "PM/Fbx/SM_Prop_WireSpool_01.fbx", Vector3(1.5, 0, 1.5)):
 		return
 	for x in [-0.4, 0.4]:
 		Geo.tube(p, 0.7, 0.08, Vector3(x, 0.7, 0), Mat.wood(), Vector3(0, 0, 90), 14)
@@ -209,6 +260,11 @@ static func cable_spool(p: Node3D) -> void:
 
 static func fence(p: Node3D, length: float, height := 2.6) -> void:
 	if not Geo.visuals:
+		return
+	if Poly.available("PM/Fbx/SM_Prop_Fence_01.fbx"):
+		var n := int(ceil(length / 3.0))
+		for i in n:
+			_sy(p, "PM/Fbx/SM_Prop_Fence_01.fbx", Vector3(3.0, 0, 0.1), false, A, Vector3(-length * 0.5 + 1.5 + i * 3.0, 0, 0))
 		return
 	var post := Mat.metal(Color(0.45, 0.46, 0.45))
 	var n := int(length / 3.0) + 1

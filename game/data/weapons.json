@@ -4,7 +4,7 @@
   "name": "VK-7 Carbine",
   "category": "assault_rifle",
   "slot": "primary",
-  "icon": "Icons_Weapons/ICON_SM_Wep_Rifle_Assault_01_BattleRoyale_Clean.png",
+  "icon": "Icons_Weapons/ICON_SM_Wep_Preset_B_Rifle_01_Military_Clean.png",
   "model": "rifle",
   "color": [
    0.18,
@@ -34,7 +34,33 @@
   "ads_time": 0.22,
   "weight": 3.4,
   "unlock_level": 1,
-  "render": "Icons_Weapons/ICON_SM_Wep_Rifle_Assault_01_BattleRoyale.png"
+  "render": "Icons_Weapons/ICON_SM_Wep_Preset_B_Rifle_01_Military.png",
+  "synty": {
+   "parts": [
+    "PM/Fbx/SM_Wep_Preset_B_Rifle_01.fbx",
+    "PM/Fbx/SM_Wep_Preset_B_Rifle_01_Slide.fbx",
+    "PM/Fbx/SM_Wep_Preset_B_Rifle_01_Trigger.fbx"
+   ],
+   "mag": "PM/Fbx/SM_Wep_Preset_B_Rifle_01_Mag.fbx",
+   "atlas": "PM/Textures/PolygonMilitary_Weapons_01.png",
+   "sights": [],
+   "sight_line": 0.162,
+   "muzzle": [
+    0,
+    0.1,
+    0.769
+   ],
+   "grip": [
+    0,
+    -0.074,
+    -0.036
+   ],
+   "handguard": [
+    0,
+    0.07,
+    0.33
+   ]
+  }
  },
  {
   "id": "ar_b",
@@ -71,14 +97,58 @@
   "ads_time": 0.27,
   "weight": 4.1,
   "unlock_level": 2,
-  "render": "Icons_Weapons/ICON_SM_Wep_Preset_A_Rifle_01_Military.png"
+  "render": "Icons_Weapons/ICON_SM_Wep_Preset_A_Rifle_01_Military.png",
+  "synty": {
+   "parts": [
+    "PM/Fbx/SM_Wep_Preset_A_Rifle_01.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Charge.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Slide.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Trigger.fbx"
+   ],
+   "mag": "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Mag.fbx",
+   "atlas": "PM/Textures/PolygonMilitary_Weapons_01.png",
+   "sights": [
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Sight.fbx",
+     "offset": [
+      0,
+      0.148,
+      -0.02
+     ]
+    },
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_Rifle_01_Sight_Glass.fbx",
+     "offset": [
+      0,
+      0.148,
+      -0.02
+     ]
+    }
+   ],
+   "sight_line": 0.19,
+   "muzzle": [
+    0,
+    0.1,
+    0.72
+   ],
+   "grip": [
+    0,
+    -0.074,
+    -0.042
+   ],
+   "handguard": [
+    0,
+    0.07,
+    0.3
+   ]
+  }
  },
  {
   "id": "smg_a",
   "name": "Kestrel SMG",
   "category": "submachine_gun",
   "slot": "primary",
-  "icon": "Icons_Weapons/ICON_SM_Wep_SubMGun_01_BattleRoyale_Clean.png",
+  "icon": "Icons_Weapons/ICON_SM_Wep_Preset_A_SMG_01_Military_Clean.png",
   "model": "smg",
   "color": [
    0.15,
@@ -108,14 +178,58 @@
   "ads_time": 0.17,
   "weight": 2.6,
   "unlock_level": 1,
-  "render": "Icons_Weapons/ICON_SM_Wep_SubMGun_01_BattleRoyale.png"
+  "render": "Icons_Weapons/ICON_SM_Wep_Preset_A_SMG_01_Military.png",
+  "synty": {
+   "parts": [
+    "PM/Fbx/SM_Wep_Preset_A_SMG_01.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_SMG_01_Charge.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_SMG_01_Slide.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_SMG_01_Trigger.fbx"
+   ],
+   "mag": "PM/Fbx/SM_Wep_Preset_A_SMG_01_Mag.fbx",
+   "atlas": "PM/Textures/PolygonMilitary_Weapons_01.png",
+   "sights": [
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_SMG_01_Sight.fbx",
+     "offset": [
+      0,
+      0.155,
+      -0.02
+     ]
+    },
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_SMG_01_Sight_Glass.fbx",
+     "offset": [
+      0,
+      0.155,
+      -0.02
+     ]
+    }
+   ],
+   "sight_line": 0.19,
+   "muzzle": [
+    0,
+    0.1,
+    0.506
+   ],
+   "grip": [
+    0,
+    -0.074,
+    -0.042
+   ],
+   "handguard": [
+    0,
+    0.07,
+    0.25
+   ]
+  }
  },
  {
   "id": "dmr_a",
   "name": "Longbow DMR",
   "category": "designated_marksman_rifle",
   "slot": "primary",
-  "icon": "Icons_Weapons/ICON_SM_Wep_Sniper_Lite_01_BattleRoyale_Clean.png",
+  "icon": "Icons_Weapons/ICON_SM_Wep_Preset_A_Sniper_01_Military_Clean.png",
   "model": "dmr",
   "color": [
    0.26,
@@ -144,7 +258,51 @@
   "ads_time": 0.32,
   "weight": 4.6,
   "unlock_level": 3,
-  "render": "Icons_Weapons/ICON_SM_Wep_Sniper_Lite_01_BattleRoyale.png"
+  "render": "Icons_Weapons/ICON_SM_Wep_Preset_A_Sniper_01_Military.png",
+  "synty": {
+   "parts": [
+    "PM/Fbx/SM_Wep_Preset_A_Sniper_01.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Charge.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Slide.fbx",
+    "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Trigger.fbx"
+   ],
+   "mag": "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Mag.fbx",
+   "atlas": "PM/Textures/PolygonMilitary_Weapons_04.png",
+   "sights": [
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Sight.fbx",
+     "offset": [
+      0,
+      0.155,
+      0.0
+     ]
+    },
+    {
+     "part": "PM/Fbx/SM_Wep_Preset_A_Sniper_01_Sight_Glass.fbx",
+     "offset": [
+      0,
+      0.155,
+      0.0
+     ]
+    }
+   ],
+   "sight_line": 0.218,
+   "muzzle": [
+    0,
+    0.1,
+    1.148
+   ],
+   "grip": [
+    0,
+    -0.083,
+    -0.03
+   ],
+   "handguard": [
+    0,
+    0.07,
+    0.36
+   ]
+  }
  },
  {
   "id": "pistol_a",
@@ -180,6 +338,30 @@
   "ads_time": 0.14,
   "weight": 1.0,
   "unlock_level": 1,
-  "render": "Icons_Weapons/ICON_SM_Wep_Pistol_01_Military.png"
+  "render": "Icons_Weapons/ICON_SM_Wep_Pistol_01_Military.png",
+  "synty": {
+   "parts": [
+    "PM/Fbx/SM_Wep_Pistol_01.fbx"
+   ],
+   "mag": "",
+   "atlas": "PM/Textures/PolygonMilitary_Weapons_01.png",
+   "sights": [],
+   "sight_line": 0.073,
+   "muzzle": [
+    0,
+    0.046,
+    0.215
+   ],
+   "grip": [
+    0,
+    -0.078,
+    -0.018
+   ],
+   "handguard": [
+    -0.02,
+    -0.085,
+    -0.02
+   ]
+  }
  }
 ]

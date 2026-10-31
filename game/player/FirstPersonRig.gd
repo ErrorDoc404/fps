@@ -2,9 +2,10 @@ extends Node3D
 ## Local-only first-person presentation: camera, arms + weapon view model, sway, bob, recoil,
 ## ADS transition, reload/switch animation, sprint pose and damage shake. No gameplay authority.
 
-const VM_SCALE := 0.3          # view model is scaled toward the camera so it never clips into walls
-const HIP_POS := Vector3(0.15, -0.17, -0.4)
-const SPRINT_POS := Vector3(0.1, -0.23, -0.34)
+const VM_SCALE := 0.3
+const VM_FOV_SQUEEZE := 0.62          # view model is scaled toward the camera so it never clips into walls
+const HIP_POS := Vector3(0.25, -0.26, -0.36)   # grip within real arm reach of the shoulders
+const SPRINT_POS := Vector3(0.1, -0.3, -0.3)
 const SPRINT_ROT := Vector3(-0.35, 0.8, 0.25)
 
 var player: Player
@@ -27,6 +28,7 @@ var _flash: OmniLight3D
 var _flash_mesh: Node3D
 var _flash_t := 0.0
 var _eye := 1.65
+var _fp_arms: SoldierModel
 
 func _ready() -> void:
 	camera = Camera3D.new()
@@ -35,7 +37,9 @@ func _ready() -> void:
 	camera.current = true
 	add_child(camera)
 	_pivot = Node3D.new()
-	_pivot.scale = Vector3.ONE * VM_SCALE
+	# Narrower "view-model FOV": compress X/Y toward the screen centre (depth unchanged), so weapon and real-length
+	# arms read at a natural on-screen size without moving them out of arm's reach. ADS alignment is unaffected.
+	_pivot.scale = Vector3(VM_SCALE * VM_FOV_SQUEEZE, VM_SCALE * VM_FOV_SQUEEZE, VM_SCALE)
 	camera.add_child(_pivot)
 	_vm_anchor = Node3D.new()
 	_pivot.add_child(_vm_anchor)
@@ -55,7 +59,12 @@ func _on_inv(inv: Dictionary) -> void:
 		_vm_weapon = id
 		if _vm:
 			_vm.queue_free()
-		_vm = ViewModel.build(GameData.weapon(id))
+		_vm = ViewModel.build(GameData.weapon(id), not Poly.available("PM/Chr/SK_Chr_Soldier_Male_01.fbx"))
+		if _fp_arms == null and Poly.available("PM/Chr/SK_Chr_Soldier_Male_01.fbx"):
+			_fp_arms = SoldierModel.new()
+			_pivot.add_child(_fp_arms)
+			_fp_arms.build_fp(player.class_id)
+			_fp_arms.position = -_fp_arms.eye_offset() + Vector3(0, -0.04, -0.12)   # shoulders tucked just under/behind the camera (standard FPS rig)   # camera sits at the operator's eyes
 		_vm_anchor.add_child(_vm)
 		_set_no_shadow(_vm)
 		_switch_anim = 1.0
@@ -148,7 +157,7 @@ func _process(dt: float) -> void:
 	# view model placement
 	if _vm:
 		var sight_y: float = _vm.get_node("Sight").position.y
-		var ads_pos := Vector3(0, -sight_y, -0.24 if def.get("model", "") != "dmr" else -0.17)
+		var ads_pos := Vector3(0, -sight_y, -0.26 if def.get("model", "") != "pistol" else -0.36)
 		var pos := HIP_POS.lerp(ads_pos, _ads)
 		var rot := Vector3.ZERO
 		var sprint_blend := 1.0 if m["sprinting"] else 0.0
@@ -174,6 +183,15 @@ func _process(dt: float) -> void:
 		_vm_anchor.position = _vm_anchor.position.lerp(pos, min(1.0, dt * 18.0))
 		var target_rot := rot + Vector3(_kick * 0.08, _sway.x * 1.5, _sway.x * 1.0)
 		_vm_anchor.rotation = _vm_anchor.rotation.lerp(target_rot, min(1.0, dt * 14.0))
+	# real arms follow the weapon: wrists just behind the grip and on the handguard (IK, true arm lengths)
+	if _fp_arms and _vm and _vm.has_node("Grip"):
+		var vx := _vm_anchor.transform * _vm.transform
+		var fwd := (vx.basis * Vector3.FORWARD).normalized()
+		var up := (vx.basis * Vector3.UP).normalized()
+		var wr: Vector3 = vx * _vm.get_node("Grip").position - fwd * 0.075 - up * 0.01
+		var wl: Vector3 = vx * _vm.get_node("LeftHand").position - fwd * 0.05 - up * 0.04
+		_fp_arms.visible = _pivot.visible and not (player.is_downed_net() or player.is_eliminated_net())
+		_fp_arms.pose_fp(dt, wr, wl)
 	# muzzle flash
 	_flash_t -= dt
 	_flash.light_energy = 3.0 if _flash_t > 0.0 else 0.0

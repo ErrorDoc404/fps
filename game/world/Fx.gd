@@ -6,6 +6,7 @@ var _throwables := {}   # id -> {node, vel}
 var _heli: Node3D
 var _heli_t := 0.0
 var _heli_target := Vector3.ZERO
+var _spinners: Array = []
 
 func tracer(from: Vector3, to: Vector3) -> void:
 	var len := from.distance_to(to)
@@ -92,9 +93,29 @@ func smoke(pos: Vector3, radius: float, duration: float) -> void:
 func helicopter(at: Vector3) -> void:
 	if _heli:
 		return
-	# Extraction helicopter: utility-transport silhouette (no vehicle models were supplied).
 	_heli = Node3D.new()
 	add_child(_heli)
+	if Poly.available("PM/Fbx/SM_Veh_Helicopter_Transport_01.fbx"):
+		# Extraction helicopter: supplied Synty transport helicopter; rotor meshes (if separate) spin.
+		var hm := Poly.instance("PM/Fbx/SM_Veh_Helicopter_Transport_01.fbx", "PM/Textures/Veh_Heli_01_A.png")
+		hm.rotation_degrees.y = 180.0
+		_heli.add_child(hm)
+		var rotor_holder := Node3D.new()
+		rotor_holder.name = "Rotor"
+		_heli.add_child(rotor_holder)
+		var tail_holder := Node3D.new()
+		tail_holder.name = "TailRotor"
+		_heli.add_child(tail_holder)
+		for mi in hm.find_children("*", "MeshInstance3D", true, false):
+			var nm := String(mi.name).to_lower()
+			if nm.contains("rotor") or nm.contains("blade"):
+				_spinners.append(mi)
+		_heli_target = at + Vector3(11, 0.0, -4)
+		_heli.global_position = at + Vector3(10, 60, -120)
+		_heli.rotation_degrees.y = 160
+		Sfx.loop_3d("heli", _heli)
+		return
+	# Fallback: code-built utility helicopter.
 	var paint := Mat.painted(Color(0.3, 0.33, 0.25), 0.6)
 	var dark := Mat.painted(Color(0.18, 0.19, 0.16), 0.6)
 	Geo.part(_heli, Vector3(2.4, 2.0, 5.2), Vector3(0, 1.6, 0), paint, Vector3.ZERO, 0.4)              # cabin
@@ -155,4 +176,6 @@ func _process(dt: float) -> void:
 	if _heli:
 		_heli.get_node("Rotor").rotate_y(dt * 25.0)
 		_heli.get_node("TailRotor").rotate_x(dt * 40.0)
+		for sp in _spinners:
+			(sp as Node3D).rotate_object_local(Vector3.UP if not String(sp.name).to_lower().contains("tail") else Vector3.RIGHT, dt * 25.0)
 		_heli.global_position = _heli.global_position.lerp(_heli_target, min(1.0, dt * 0.35))

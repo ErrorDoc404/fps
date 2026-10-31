@@ -85,3 +85,30 @@ Sprite constants live in `game/ui/UiKit.gd`; data-driven icons and renders live 
 Available but not yet used: `Icons_WeaponMods/` (attachments UI), controller prompt sets in `Core/Icons_Input/*`
 (for when controller UI navigation is added), additional `Badges/` shields and wings (titles and insignias), and
 `HUD/..._WeaponWheel_*`.
+
+## Synty POLYGON 3D packs (added on `master` in commit bf37cb0)
+Source paths: `PM/` = `assets/POLYGON_Military_SourceFiles_v4/SourceFiles/`, `PW/` = `assets/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/`.
+`tools/import_assets.py` copies only the referenced files into `game/assets/polygon/` (88 files, ~10 MB). The 4096 px atlases are
+saved as 2048 px converted copies; full list in `game/assets/polygon/MANIFEST.txt`. The FBX files reference missing `.psd` textures,
+so `core/Poly.gd` assigns the matching PNG atlas from `MaterialList_PolygonMilitary.txt`.
+
+| Game element | Synty asset | Notes |
+|---|---|---|
+| Task Force operators | `PM/Chr/SK_Chr_Soldier_Male_01` (Assault), `Soldier_Female_01` (Medic), `Ghillie_Male_01` (Recon), `Soldier_Male_02` (Support), atlas `Texture_01_A` | Helmets, goggles and headset from `SM_Chr_Attach_*` attached to the `head` bone |
+| Dominion units | `Insurgent_Male_01` + `Helmet_02` (Rifleman), `Soldier_Male_02` + `Helmet_10`/`Visor` on `Texture_02_A` (Heavy), `Ghillie_Male_01` on `Texture_02_A` (Spotter), `Leader_Male_01` + `Hair_Male_02` (Officer) | |
+| First-person arms | Same operator model as the player's class; chest, head and legs collapsed by bone scale | Two-bone IK onto the weapon grip and handguard, true arm length |
+| Weapons | VK-7 = `SM_Wep_Preset_B_Rifle_01`, RK-12 = `Preset_A_Rifle_01`, Kestrel = `Preset_A_SMG_01`, Longbow = `Preset_A_Sniper_01`, P9 = `SM_Wep_Pistol_01` (+ Mag / Sight / Sight_Glass / Charge / Slide / Trigger parts), atlas `Weapons_01` (`Weapons_04` for the Longbow) | Sights mounted on the rail; magazine on its own node for reload animation |
+| Containers | `PW/FBX/SM_Prop_Shipping_Container_01` | fitted to the existing colliders |
+| Jersey barriers / HESCO | `SM_Prop_Barrier_01`, `SM_Prop_Barrier_Base_Row_01` | |
+| Trucks | `SM_Veh_Truck_01` (atlas `Land_Vehicles_05`) | |
+| Crates, barrels, pallets, sacks, tyres, wire spool | `SM_Prop_Crate_Cube_01`, `Crate_Wood_01`, `Barrel_01`, `Pallet_01`, `Sack_Large_01`, `Tire_01`, `WireSpool_01` | |
+| Light poles, generator, guard tower, water tanks, fences, razor wire, satellite dish | `SM_Prop_LightPole_01`, `Generator_Large_01`, `SM_Bld_GuardTower_01`, `WaterTank_01`, `Fence_01`, `RazorWire_01`, `Satellite_Dish_01` | |
+| Office | `SM_Prop_Desk_01`, `Chair_01`, `Lockers_01`, `Gunrack_01`, `PW/.../SM_Prop_Mission_Board_01` | |
+| Scrap / debris | `SM_Prop_Vehicle_Debris_01`, `Rubble_Pile_01` | |
+| Helipad, extraction helicopter | `SM_Env_Helipad_01`, `SM_Veh_Helicopter_Transport_01` (atlas `Veh_Heli_01_A`) | |
+| Horizon, outskirts | `SM_Env_Mountain_01–03`, `SM_Env_Rock_01/02`, `SM_Env_Bush_Small_01` | |
+| Signage, AC | `PW/.../SM_Prop_Danger_Sign_01`, `SM_Prop_Airconditioner_01` | |
+| Wall, ground and road surfaces | `PW/Textures/Corrigated_Iron_01_Tan` + `_Normals` (warehouse), `Brick_Large_01` + `_Normals` (maintenance), `Dirt_Dry_01` (ground), `PM/Textures/Road_Texture` (apron/road) | triplanar tiled (`Mat.tiled`) |
+
+Still procedural (no matching model in the packs): forklift, warehouse rack frames, storage tanks, server rack, intel laptop
+(with a supplied HUD sprite screen), warehouse shell walls (with Synty textures).

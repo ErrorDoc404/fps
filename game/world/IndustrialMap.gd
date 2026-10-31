@@ -54,9 +54,9 @@ func _ground() -> void:
 	Geo.solid(root, Vector3(160, 1, 160), Vector3(0, -0.5, 0), null)
 	if not V:
 		return
-	Geo.part(root, Vector3(160, 0.02, 160), Vector3(0, -0.01, 0), Mat.ground(), Vector3.ZERO, 0.0)
-	Geo.part(root, Vector3(48, 0.03, 38), Vector3(0, 0.0, 25), Mat.asphalt(), Vector3.ZERO, 0.0)       # yard apron
-	Geo.part(root, Vector3(9, 0.03, 30), Vector3(0, 0.0, 55), Mat.asphalt(), Vector3.ZERO, 0.0)        # access road
+	Geo.part(root, Vector3(160, 0.02, 160), Vector3(0, -0.01, 0), Mat.tiled("PW/Textures/Dirt_Dry_01.png", "", 0.25, Color(0.95, 0.9, 0.85)), Vector3.ZERO, 0.0)
+	Geo.part(root, Vector3(48, 0.03, 38), Vector3(0, 0.0, 25), Mat.tiled("PM/Textures/Road_Texture.png", "", 0.12, Color(0.8, 0.8, 0.8)), Vector3.ZERO, 0.0)       # yard apron
+	Geo.part(root, Vector3(9, 0.03, 30), Vector3(0, 0.0, 55), Mat.tiled("PM/Textures/Road_Texture.png", "", 0.12, Color(0.8, 0.8, 0.8)), Vector3.ZERO, 0.0)        # access road
 	Geo.part(root, Vector3(22, 0.03, 32), Vector3(0, 0.0, -40), Mat.concrete(Color(0.6, 0.58, 0.54)), Vector3.ZERO, 0.0)
 	Geo.part(root, Vector3(14, 0.03, 16), Vector3(-40, 0.0, -6), Mat.concrete(Color(0.56, 0.54, 0.5)), Vector3.ZERO, 0.0)
 	# painted lane markings on the apron and road
@@ -118,9 +118,9 @@ func _wall_visual(size: Vector3, pos: Vector3, along_z: bool, style: String) -> 
 			var dims := func(l, h, t): return Vector3(t, h, l) if along_z else Vector3(l, h, t)
 			if bottom < 0.1:
 				Geo.part(root, dims.call(long, plinth_h, thick + 0.06), Vector3(pos.x, plinth_h * 0.5, pos.z), Mat.concrete(Color(0.62, 0.6, 0.56)), Vector3.ZERO, 0.02)
-				Geo.part(root, dims.call(long, size.y - plinth_h, thick), Vector3(pos.x, plinth_h + (size.y - plinth_h) * 0.5, pos.z), Mat.corrugated(Color(0.46, 0.48, 0.42)), Vector3.ZERO, 0.0)
+				Geo.part(root, dims.call(long, size.y - plinth_h, thick), Vector3(pos.x, plinth_h + (size.y - plinth_h) * 0.5, pos.z), Mat.tiled("PW/Textures/Corrigated_Iron_01_Tan.png", "PW/Textures/Corrigated_Iron_01_Normals.png", 0.5), Vector3.ZERO, 0.0)
 			else:
-				Geo.part(root, size, pos, Mat.corrugated(Color(0.46, 0.48, 0.42)), Vector3.ZERO, 0.0)
+				Geo.part(root, size, pos, Mat.tiled("PW/Textures/Corrigated_Iron_01_Tan.png", "PW/Textures/Corrigated_Iron_01_Normals.png", 0.5), Vector3.ZERO, 0.0)
 			Geo.part(root, dims.call(long + 0.05, 0.25, thick + 0.12), Vector3(pos.x, bottom + size.y - 0.12, pos.z), Mat.painted(Color(0.55, 0.5, 0.36)), Vector3.ZERO, 0.02)
 			if long > 3.0 and bottom < 0.1:
 				var n := int(long / 6.0)
@@ -129,7 +129,7 @@ func _wall_visual(size: Vector3, pos: Vector3, along_z: bool, style: String) -> 
 					for side in [-1, 1]:
 						Geo.part(root, dims.call(0.3, size.y, 0.25), pos + axis * off + Vector3(0, 0, 0) + (Vector3(side * (thick * 0.5 + 0.12), 0, 0) if along_z else Vector3(0, 0, side * (thick * 0.5 + 0.12))), Mat.painted(Color(0.45, 0.46, 0.42)), Vector3.ZERO, 0.02)
 		"brick":
-			Geo.part(root, size, pos, Mat.concrete(Color(0.62, 0.48, 0.38)), Vector3.ZERO, 0.02)
+			Geo.part(root, size, pos, Mat.tiled("PW/Textures/Brick_Large_01.png", "PW/Textures/Brick_Large_01_Normals.png", 0.5), Vector3.ZERO, 0.02)
 			var dims2 := Vector3(thick + 0.1, 0.2, long + 0.05) if along_z else Vector3(long + 0.05, 0.2, thick + 0.1)
 			Geo.part(root, dims2, Vector3(pos.x, bottom + size.y - 0.1, pos.z), Mat.concrete(Color(0.7, 0.68, 0.64)), Vector3.ZERO, 0.02)
 		"perimeter":
@@ -226,10 +226,7 @@ func _warehouse() -> void:
 	info["interactables"]["intel_laptop"] = {"pos": Vector3(15, 1.0, -22.5), "label": "Download intelligence"}
 	if V:
 		var desk := _node(Vector3(15, 0, -22.5))
-		Geo.part(desk, Vector3(2.0, 0.06, 1.0), Vector3(0, 0.87, 0), Mat.wood(Color(0.5, 0.4, 0.3)), Vector3.ZERO, 0.01)
-		for sx in [-0.9, 0.9]:
-			Geo.part(desk, Vector3(0.06, 0.84, 0.9), Vector3(sx, 0.42, 0), Mat.metal(Color(0.3, 0.3, 0.3)), Vector3.ZERO, 0.0)
-		Geo.part(desk, Vector3(0.5, 0.6, 0.85), Vector3(0.6, 0.35, 0), Mat.painted(Color(0.42, 0.44, 0.42)), Vector3.ZERO, 0.02)  # drawer unit
+		Poly.place(desk, "PM/Fbx/SM_Prop_Desk_01.fbx", Props.A, Vector3(0, 0.45, 0), 180.0, Vector3(2.0, 0.9, 1.0), true)
 		# rugged laptop (intel objective) with a supplied HUD sprite on its screen
 		var lap := Node3D.new()
 		lap.position = Vector3(0, 0.91, 0)
@@ -246,12 +243,10 @@ func _warehouse() -> void:
 		Geo.part(desk, Vector3(0.28, 0.22, 0.04), Vector3(-0.6, 1.0, 0.2), Mat.polymer(), Vector3(0, 15, 0), 0.01)  # radio
 		Geo.part(desk, Vector3(0.5, 0.06, 0.4), Vector3(-0.2, 0.92, -0.15), Mat.painted(Color(0.85, 0.83, 0.75)), Vector3(0, 12, 0), 0.0)  # papers
 		# chair, filing cabinets, whiteboard, maps
-		Geo.part(root, Vector3(0.5, 0.08, 0.5), Vector3(15, 0.5, -21.5), Mat.fabric(Color(0.15, 0.15, 0.15)), Vector3.ZERO, 0.03)
-		Geo.part(root, Vector3(0.5, 0.55, 0.08), Vector3(15, 0.8, -21.25), Mat.fabric(Color(0.15, 0.15, 0.15)), Vector3.ZERO, 0.03)
-		Geo.tube(root, 0.03, 0.45, Vector3(15, 0.25, -21.5), Mat.metal(), Vector3.ZERO, 6)
-		for i in 3:
-			Geo.part(root, Vector3(0.5, 1.3, 0.6), Vector3(17.5, 0.65, -18.0 + i * 0.55), Mat.painted(Color(0.45, 0.47, 0.44)), Vector3.ZERO, 0.02)
-		Geo.part(root, Vector3(0.05, 1.0, 1.8), Vector3(10.15, 1.6, -18), Mat.painted(Color(0.92, 0.92, 0.9), 0.3), Vector3.ZERO, 0.01)
+		Poly.place(root, "PM/Fbx/SM_Prop_Chair_01.fbx", Props.A, Vector3(15.6, 0, -21.4), 160.0, Vector3(0.7, 0, 0.7))
+		Poly.place(root, "PM/Fbx/SM_Prop_Lockers_01.fbx", Props.A, Vector3(17.6, 0, -18.2), -90.0)
+		Poly.place(root, "PM/Fbx/SM_Prop_Gunrack_01.fbx", Props.A, Vector3(12.0, 0, -16.4), 0.0)
+		Poly.place(root, "PW/FBX/SM_Prop_Mission_Board_01.fbx", Props.A, Vector3(10.2, 0.7, -18), 90.0)
 		var mapboard := Sprite3D.new()
 		mapboard.texture = UiKit.tex(UiKit.SPR_SAMPLE_MAP)
 		if mapboard.texture:
@@ -326,7 +321,7 @@ func _maintenance() -> void:
 		Geo.part(bench, Vector3(0.6, 0.25, 0.3), Vector3(-0.8, 1.13, 0), Mat.painted(Color(0.7, 0.15, 0.1), 0.5), Vector3(0, 10, 0), 0.02)  # toolbox
 		Geo.part(bench, Vector3(2.9, 1.2, 0.04), Vector3(0, 1.8, 0.47), Mat.painted(Color(0.4, 0.42, 0.38)), Vector3.ZERO, 0.0)   # pegboard
 		# rooftop AC + pipes
-		Geo.part(root, Vector3(2, 0.9, 1.4), Vector3(-42, h + 0.75, -3), Mat.painted(Color(0.6, 0.6, 0.58)), Vector3.ZERO, 0.05)
+		Poly.place(root, "PM/Fbx/SM_Prop_Airconditioner_01.fbx", Props.A, Vector3(-42, h + 0.3, -3), 0.0)
 		Geo.tube(root, 0.12, 4.6, Vector3(-33.7, 2.3, -10), Mat.metal(Color(0.5, 0.48, 0.45)), Vector3.ZERO, 8)
 		Props.hanging_lamp(root, Vector3(-40, 4.0, -6), 1.6, 10.0, Color(0.8, 0.9, 1.0))
 		Props.sign_board(root, Vector3(-33.75, 3.4, -5.5), 90.0, UiKit.ICON_MAP_LIGHTNING, Color(0.85, 0.7, 0.15), Color(0.1, 0.1, 0.1), 0.7)
@@ -336,8 +331,8 @@ func _maintenance() -> void:
 		_block(Vector3(3, 1.4, 2), p + Vector3(0, 0.7, 0), rot)
 		if V:
 			var s := _node(p + Vector3(0, 0.7, 0), rot)
-			Geo.part(s, Vector3(3, 0.5, 2), Vector3(0, -0.45, 0), Mat.rust(), Vector3(0, 0, 3), 0.1)
-			Geo.part(s, Vector3(1.6, 0.9, 1.4), Vector3(-0.5, 0.2, 0.1), Mat.rust(Color(0.4, 0.32, 0.25)), Vector3(8, 20, 0), 0.08)
+			Poly.place(s, "PM/Fbx/SM_Prop_Vehicle_Debris_01.fbx", Props.A, Vector3(0, -0.7, 0), 0.0, Vector3(3.0, 0, 2.0), true)
+			Poly.place(s, "PM/Fbx/SM_Prop_Rubble_Pile_01.fbx", Props.A, Vector3(-0.6, -0.4, 0.2), 30.0, Vector3(1.4, 0, 1.2))
 			Props.tire_stack(_node(p + Vector3(1.0, 0.0, 0.4)), 2)
 			Props.barrel(_node(p + Vector3(0.9, 0.3, -0.5)), Color(0.5, 0.25, 0.15), true)
 
@@ -376,12 +371,7 @@ func _yard() -> void:
 func _north() -> void:
 	if V:
 		var pad := _node(Vector3(0, 0, -52))
-		Geo.tube(pad, 6.6, 0.08, Vector3(0, 0.04, 0), Mat.concrete(Color(0.42, 0.42, 0.42)), Vector3.ZERO, 32)
-		Geo.tube(pad, 6.2, 0.02, Vector3(0, 0.085, 0), Mat.painted(Color(0.28, 0.29, 0.3), 0.7), Vector3.ZERO, 32)
-		var paint := Mat.painted(Color(0.85, 0.82, 0.74), 0.7)
-		Geo.part(pad, Vector3(0.7, 0.01, 4.2), Vector3(-1.3, 0.1, 0), paint, Vector3.ZERO, 0.0)
-		Geo.part(pad, Vector3(0.7, 0.01, 4.2), Vector3(1.3, 0.1, 0), paint, Vector3.ZERO, 0.0)
-		Geo.part(pad, Vector3(1.9, 0.01, 0.7), Vector3(0, 0.1, 0), paint, Vector3.ZERO, 0.0)
+		Poly.place(pad, "PM/Fbx/SM_Env_Helipad_01.fbx", Props.A, Vector3(0, -0.55, 0), 0.0, Vector3(14.0, 0, 14.0))
 		for i in 12:
 			var a := TAU * i / 12.0
 			Geo.part(pad, Vector3(0.18, 0.08, 0.18), Vector3(cos(a) * 6.4, 0.12, sin(a) * 6.4), Mat.emissive(Color(1.0, 0.75, 0.2), 3.0), Vector3.ZERO, 0.02)
@@ -390,6 +380,10 @@ func _north() -> void:
 		Geo.tube(ws, 0.06, 5.0, Vector3(0, 2.5, 0), Mat.painted(Color(0.85, 0.85, 0.8)), Vector3.ZERO, 6)
 		Geo.tube(ws, 0.35, 1.8, Vector3(0.9, 4.8, 0), Mat.fabric(Color(0.9, 0.4, 0.1)), Vector3(0, 0, 80), 10, 0.15)
 		Props.sign_board(root, Vector3(-7.6, 1.5, -45.5), 0.0, UiKit.ICON_HELI, Color(0.2, 0.32, 0.25), Color(0.95, 0.9, 0.7), 1.0)
+		Poly.place(root, "PW/FBX/SM_Prop_Danger_Sign_01.fbx", Props.A, Vector3(4.0, 0, 69.0), 180.0)
+		Poly.place(root, "PM/Fbx/SM_Prop_Satellite_Dish_01.fbx", Props.A, Vector3(-27.5, 0, -42.0), 40.0)
+		for i in 6:   # perimeter razor wire runs (Synty)
+			Poly.place(root, "PM/Fbx/SM_Prop_RazorWire_01.fbx", Props.A, Vector3(-30.0 + i * 4.3, 0, -66.5), 0.0)
 		var post := Geo.tube(root, 0.05, 1.5, Vector3(-7.6, 0.75, -45.55), Mat.metal(), Vector3.ZERO, 6)
 	for p in [Vector3(-10, 0, -34), Vector3(9, 0, -36), Vector3(-4, 0, -42), Vector3(12, 0, -46)]:
 		var rot := rng.randf_range(-30, 30)
@@ -433,6 +427,8 @@ func _east_tanks() -> void:
 	_solid(Vector3(0.4, 3, 12), Vector3(30, 1.5, 26), func(): return Mat.concrete(Color(0.62, 0.6, 0.56)))
 	if V:
 		Props.generator(_node(Vector3(33, 0.65, 23)))
+		for wp in [Vector3(48.5, 0, -16.5), Vector3(50.5, 0, -16.0), Vector3(36.0, 0, 9.5)]:
+			Poly.place(root, "PM/Fbx/SM_Prop_WaterTank_01.fbx", Props.A, wp, 15.0)
 		Props.cable_spool(_node(Vector3(34.5, 0, 28)))
 		Props.sign_board(root, Vector3(29.78, 2.0, 24), -90.0, UiKit.ICON_MAP_DANGER, Color(0.85, 0.7, 0.15), Color(0.1, 0.1, 0.1), 0.8)
 
@@ -461,8 +457,12 @@ func _dressing() -> void:
 	Props.decal(root, "FX/SPR_FX_MilitaryCombat_BloodSplats_01.png", Vector3(-8, 0.0, 34), Vector3(2.5, 0.6, 2.5), Color(0.08, 0.07, 0.05, 0.5))
 	Props.decal(root, UiKit.BADGE_DOMINION, Vector3(15, 1.4, 12.94), Vector3(1.8, 0.5, 1.8), Color(0.75, 0.1, 0.08, 0.9), Vector3(90, 0, 0))
 	# distant ridge silhouettes beyond the walls for depth
-	for i in 14:
-		var a := TAU * i / 14.0
-		var r := rng.randf_range(115, 135)
-		var hgt := rng.randf_range(10, 26)
-		Geo.part(root, Vector3(rng.randf_range(30, 50), hgt, 20), Vector3(cos(a) * r, hgt * 0.4, sin(a) * r), Mat.ground(Color(0.5, 0.42, 0.34)), Vector3(0, rad_to_deg(-a) + 90, rng.randf_range(-8, 8)), 2.5)
+	for i in 12:   # Synty mountain ring on the horizon
+		var a := TAU * i / 12.0
+		var r := rng.randf_range(125, 150)
+		var mesh: String = ["PM/Fbx/SM_Env_Mountain_01.fbx", "PM/Fbx/SM_Env_Mountain_02.fbx", "PM/Fbx/SM_Env_Mountain_03.fbx"][i % 3]
+		var mn := Poly.place(root, mesh, Props.A, Vector3(cos(a) * r, -1.0, sin(a) * r), rng.randf_range(0, 360))
+		mn.scale = Vector3.ONE * rng.randf_range(1.0, 1.6)
+	for i in 10:   # rocks + desert scrub outside the fence line
+		var a2 := TAU * i / 10.0 + 0.3
+		Poly.place(root, ["PM/Fbx/SM_Env_Rock_01.fbx", "PM/Fbx/SM_Env_Rock_02.fbx", "PM/Fbx/SM_Env_Bush_Small_01.fbx"][i % 3], Props.A, Vector3(cos(a2) * 85.0, 0, sin(a2) * 85.0), rng.randf_range(0, 360))

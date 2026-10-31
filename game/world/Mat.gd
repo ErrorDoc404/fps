@@ -188,6 +188,27 @@ static func camo(kind: String) -> StandardMaterial3D:
 	_cache[k] = m
 	return m
 
+## Tiled material from a supplied Synty texture (Warehouse pack corrugated iron / brick / dirt, Military road),
+## triplanar so code-built surfaces need no UVs. `scale` = texture repeats per metre.
+static func tiled(albedo_rel: String, normal_rel: String, scale: float, tint := Color.WHITE) -> StandardMaterial3D:
+	var k := "tiled|%s|%s|%.3f|%s" % [albedo_rel, normal_rel, scale, tint.to_html()]
+	if _cache.has(k):
+		return _cache[k]
+	var m := StandardMaterial3D.new()
+	var at := Poly.ROOT + albedo_rel
+	m.albedo_texture = load(at) if ResourceLoader.exists(at) else null
+	m.albedo_color = tint
+	if normal_rel != "" and ResourceLoader.exists(Poly.ROOT + normal_rel):
+		m.normal_enabled = true
+		m.normal_texture = load(Poly.ROOT + normal_rel)
+	m.roughness = 0.88
+	m.uv1_triplanar = true
+	m.uv1_triplanar_sharpness = 6.0
+	m.uv1_scale = Vector3.ONE * scale
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	_cache[k] = m
+	return m
+
 static func glass(tint := Color(0.35, 0.5, 0.55, 0.35)) -> StandardMaterial3D:
 	var k := "glass|" + tint.to_html()
 	if not _cache.has(k):
