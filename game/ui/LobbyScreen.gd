@@ -19,9 +19,7 @@ func _init(a: Node) -> void:
 	UiKit.full_rect(self)
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.045, 0.05, 0.045)
-	add_child(UiKit.full_rect(bg))
+	UiKit.backdrop(self, UiKit.SHOT_LOBBY, 0.7)
 	var stripes := UiKit.icon(UiKit.SPR_HAZARD, 0, Color(UiKit.ACCENT, 0.12))
 	stripes.stretch_mode = TextureRect.STRETCH_TILE
 	stripes.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
@@ -158,13 +156,14 @@ func _refresh(st: Dictionary) -> void:
 	for slot in range(4):
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
-		row.custom_minimum_size.y = 42
+		row.custom_minimum_size.y = 52
 		if by_slot.has(slot):
 			var pid: int = by_slot[slot][0]
 			var m: Dictionary = by_slot[slot][1]
 			var c := GameData.klass(m["class"])
 			var col: Array = c["color"]
-			row.add_child(UiKit.icon(c["icon"], 34, Color(col[0], col[1], col[2])))
+			row.add_child(UiKit.portrait_card(m["class"], 44))
+			row.add_child(UiKit.icon(UiKit.rank_badge(int(m["level"])), 30))
 			var nv := VBoxContainer.new()
 			var lead := " ★" if st["leader"] == pid else ""
 			nv.add_child(UiKit.label("%s%s%s" % [m["name"], lead, "  (you)" if pid == Session.my_peer else ""], 16, UiKit.ACCENT if pid == Session.my_peer else UiKit.TEXT, true))
@@ -181,20 +180,36 @@ func _refresh(st: Dictionary) -> void:
 	_clear(_classes)
 	for cid in GameData.classes:
 		var c := GameData.klass(cid)
+		var sel: bool = me.get("class", "") == cid
+		var card := VBoxContainer.new()
+		card.add_theme_constant_override("separation", 4)
+		var pic := UiKit.portrait_card(cid, 132, sel)
+		pic.mouse_filter = Control.MOUSE_FILTER_STOP
+		pic.gui_input.connect(func(ev):
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				Sfx.play_2d("ui", -10.0)
+				Session.request_class(cid))
+		pic.tooltip_text = "%s — %s" % [c["name"], c["role"]]
+		card.add_child(pic)
 		var b := Button.new()
 		b.toggle_mode = true
-		b.button_pressed = me.get("class", "") == cid
-		b.text = c["name"]
+		b.button_pressed = sel
+		b.text = c["name"].to_upper()
 		b.icon = UiKit.tex(c["icon"])
-		b.add_theme_constant_override("icon_max_width", 40)
-		b.custom_minimum_size = Vector2(170, 56)
-		b.tooltip_text = c["role"]
+		b.add_theme_constant_override("icon_max_width", 26)
+		b.custom_minimum_size = Vector2(132, 40)
 		b.pressed.connect(func(): Session.request_class(cid))
-		_classes.add_child(b)
+		card.add_child(b)
+		_classes.add_child(card)
 	# loadout
 	_clear(_loadout)
 	var cls := GameData.klass(me.get("class", "assault"))
-	_loadout.add_child(UiKit.label("%s — %s. Equipment: %s" % [cls.get("name", ""), cls.get("role", ""), ", ".join(cls.get("equipment", {}).keys().map(func(k): return "%s ×%d" % [GameData.equip(k)["name"], cls["equipment"][k]]))], 14, UiKit.DIM))
+	_loadout.add_child(UiKit.label("%s — %s" % [cls.get("name", ""), cls.get("role", "")], 15, UiKit.DIM))
+	var eq := HBoxContainer.new()
+	eq.add_theme_constant_override("separation", 12)
+	for k in cls.get("equipment", {}):
+		eq.add_child(UiKit.socket(UiKit.equip_render(k), 58, "×%d" % cls["equipment"][k], GameData.equip(k)["name"]))
+	_loadout.add_child(eq)
 	for slot_key in ["primary", "secondary"]:
 		_loadout.add_child(UiKit.label(slot_key.to_upper(), 15, UiKit.ACCENT, true))
 		var row := HFlowContainer.new()
@@ -208,7 +223,7 @@ func _refresh(st: Dictionary) -> void:
 			b.toggle_mode = true
 			b.button_pressed = me.get(slot_key, "") == wid
 			b.disabled = not unlocked
-			b.icon = UiKit.tex(w["icon"])
+			b.icon = UiKit.tex(w["render"])
 			b.add_theme_constant_override("icon_max_width", 96)
 			b.text = w["name"] + ("" if unlocked else "  [LVL %d]" % w["unlock_level"])
 			b.custom_minimum_size = Vector2(230, 70)

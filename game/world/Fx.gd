@@ -92,20 +92,51 @@ func smoke(pos: Vector3, radius: float, duration: float) -> void:
 func helicopter(at: Vector3) -> void:
 	if _heli:
 		return
+	# Extraction helicopter: utility-transport silhouette (no vehicle models were supplied).
 	_heli = Node3D.new()
 	add_child(_heli)
-	var body := Geo.box(Vector3(2.6, 2.2, 7.0), Color(0.22, 0.25, 0.2), Vector3(0, 1.4, 0), _heli)
-	Geo.box(Vector3(0.6, 0.6, 5.0), Color(0.22, 0.25, 0.2), Vector3(0, 1.8, 5.5), _heli)
-	Geo.box(Vector3(2.2, 1.0, 1.2), Color(0.1, 0.15, 0.2), Vector3(0, 1.8, -3.3), body)
-	var rotor := Geo.box(Vector3(14, 0.06, 0.4), Color(0.1, 0.1, 0.1), Vector3(0, 2.7, 0), _heli)
+	var paint := Mat.painted(Color(0.3, 0.33, 0.25), 0.6)
+	var dark := Mat.painted(Color(0.18, 0.19, 0.16), 0.6)
+	Geo.part(_heli, Vector3(2.4, 2.0, 5.2), Vector3(0, 1.6, 0), paint, Vector3.ZERO, 0.4)              # cabin
+	Geo.part(_heli, Vector3(2.0, 1.4, 1.6), Vector3(0, 1.45, -3.0), paint, Vector3(12, 0, 0), 0.45)     # nose
+	Geo.part(_heli, Vector3(1.9, 0.8, 1.2), Vector3(0, 1.95, -3.05), Mat.glass(Color(0.2, 0.3, 0.32, 0.75)), Vector3(28, 0, 0), 0.2)
+	Geo.part(_heli, Vector3(0.9, 0.8, 5.5), Vector3(0, 2.0, 4.8), paint, Vector3(-4, 0, 0), 0.2)        # tail boom
+	Geo.part(_heli, Vector3(0.15, 1.6, 1.0), Vector3(0, 2.8, 7.4), paint, Vector3(-15, 0, 0), 0.05)     # fin
+	Geo.part(_heli, Vector3(2.2, 0.08, 0.6), Vector3(0, 2.0, 6.5), paint, Vector3.ZERO, 0.03)           # stabiliser
+	Geo.part(_heli, Vector3(1.4, 0.6, 2.2), Vector3(0, 2.85, -0.2), dark, Vector3.ZERO, 0.2)            # engine housing
+	for x in [-1.2, 1.2]:
+		Geo.part(_heli, Vector3(0.1, 0.1, 3.6), Vector3(x, 0.15, -0.3), dark, Vector3.ZERO, 0.03)        # skids
+		for z in [-1.2, 0.8]:
+			Geo.part(_heli, Vector3(0.08, 0.7, 0.08), Vector3(x * 0.9, 0.5, z), dark, Vector3(0, 0, -x * 10), 0.0)
+		Geo.part(_heli, Vector3(0.05, 1.3, 1.6), Vector3(x, 1.5, 0.3), Mat.painted(Color(0.08, 0.08, 0.08)), Vector3.ZERO, 0.0)  # open door
+	var star := Sprite3D.new()   # Task Force roundel from the supplied badge set
+	star.texture = UiKit.tex("Badges/SPR_MilitaryCombat_Badge_Element_Star_01_Silver.png")
+	if star.texture:
+		star.pixel_size = 0.8 / float(star.texture.get_width())
+	star.position = Vector3(0.46, 2.0, 4.0)
+	star.rotation_degrees.y = 90
+	star.modulate = Color(0.85, 0.85, 0.8)
+	_heli.add_child(star)
+	var rotor := Node3D.new()
 	rotor.name = "Rotor"
+	rotor.position = Vector3(0, 3.25, -0.2)
+	_heli.add_child(rotor)
+	Geo.tube(rotor, 0.12, 0.35, Vector3.ZERO, dark, Vector3.ZERO, 8)
+	for a in [0.0, 90.0]:
+		Geo.part(rotor, Vector3(14.5, 0.05, 0.38), Vector3(0, 0.16, 0), Mat.painted(Color(0.12, 0.12, 0.12)), Vector3(0, a, 0), 0.01)
+	var tail := Node3D.new()
+	tail.name = "TailRotor"
+	tail.position = Vector3(0.25, 2.9, 7.6)
+	_heli.add_child(tail)
+	Geo.part(tail, Vector3(0.04, 2.0, 0.18), Vector3.ZERO, Mat.painted(Color(0.12, 0.12, 0.12)), Vector3.ZERO, 0.0)
 	var light := OmniLight3D.new()
 	light.light_color = Color(1, 0.2, 0.2)
 	light.light_energy = 2.0
 	light.position = Vector3(0, 0.2, 0)
 	_heli.add_child(light)
-	_heli_target = at + Vector3(11, 0.3, -4)
+	_heli_target = at + Vector3(11, 0.0, -4)
 	_heli.global_position = at + Vector3(10, 60, -120)
+	_heli.rotation_degrees.y = 160
 	Sfx.loop_3d("heli", _heli)
 
 func _process(dt: float) -> void:
@@ -123,4 +154,5 @@ func _process(dt: float) -> void:
 		t["vel"] = v
 	if _heli:
 		_heli.get_node("Rotor").rotate_y(dt * 25.0)
+		_heli.get_node("TailRotor").rotate_x(dt * 40.0)
 		_heli.global_position = _heli.global_position.lerp(_heli_target, min(1.0, dt * 0.35))

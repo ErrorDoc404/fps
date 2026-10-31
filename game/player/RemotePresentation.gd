@@ -5,13 +5,16 @@ var player: Player
 var model: SoldierModel
 var tag: Label3D
 var _last_pos := Vector3.ZERO
+var _weapon := ""
 
 func _ready() -> void:
 	var c: Array = GameData.klass(player.class_id).get("color", [0.8, 0.8, 0.8])
 	var accent := Color(c[0], c[1], c[2])
 	model = SoldierModel.new()
-	model.build(Color(0.36, 0.38, 0.29), Color(0.25, 0.27, 0.2), accent)
-	model.rotation.y = 0.0
+	_weapon = player.net.get("weapon", "")
+	if _weapon == "":
+		_weapon = GameData.klass(player.class_id).get("default_primary", "ar_a")
+	model.build_kind(player.class_id, _weapon)
 	add_child(model)
 	tag = Label3D.new()
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -37,5 +40,8 @@ func _process(dt: float) -> void:
 	elif player.is_eliminated_net(): state = "dead"
 	model.pose(dt, int(player.motor["stance"]), player.pitch, speed, state)
 	model.set_gun_visible(state == "alive")
+	if player.net.get("weapon", "") != "" and player.net["weapon"] != _weapon:
+		_weapon = player.net["weapon"]
+		model.set_weapon(_weapon)
 	tag.position.y = 2.15 if state == "alive" and int(player.motor["stance"]) == 0 else 1.0
 	tag.modulate.a = 1.0 if not (int(player.net["flags"]) & Player.F_DISCONNECTED) else 0.4

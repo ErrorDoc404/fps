@@ -57,41 +57,85 @@ func _build_map(with_visuals: bool) -> void:
 		c.name = n
 		add_child(c)
 	if with_visuals:
+		Mat.prewarm()
 		_environment()
 
 func _environment() -> void:
+	# Late-afternoon desert-industrial look matching the supplied Synty sample art: warm low sun, haze, soft AO.
 	var env := Environment.new()
 	var sky := Sky.new()
 	var sm := ProceduralSkyMaterial.new()
-	sm.sky_top_color = Color(0.32, 0.38, 0.5)
-	sm.sky_horizon_color = Color(0.85, 0.62, 0.45)
-	sm.ground_bottom_color = Color(0.2, 0.18, 0.16)
-	sm.ground_horizon_color = Color(0.6, 0.48, 0.38)
-	sm.sun_angle_max = 20.0
+	sm.sky_top_color = Color(0.36, 0.47, 0.62)
+	sm.sky_horizon_color = Color(0.86, 0.72, 0.56)
+	sm.ground_bottom_color = Color(0.3, 0.25, 0.2)
+	sm.ground_horizon_color = Color(0.74, 0.62, 0.48)
+	sm.sun_angle_max = 25.0
+	sm.sun_curve = 0.12
 	sky.sky_material = sm
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.7
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 1.05
+	env.ambient_light_energy = 0.85
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 0.95
+	env.tonemap_white = 6.0
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.7, 0.55, 0.45)
-	env.fog_density = 0.006
-	env.fog_sky_affect = 0.3
+	env.fog_light_color = Color(0.82, 0.7, 0.56)
+	env.fog_density = 0.0045
+	env.fog_aerial_perspective = 0.35
+	env.fog_sky_affect = 0.25
+	env.volumetric_fog_enabled = true          # Forward+ only; ignored by the compatibility renderer
+	env.volumetric_fog_density = 0.008
+	env.volumetric_fog_albedo = Color(0.9, 0.82, 0.7)
+	env.volumetric_fog_anisotropy = 0.5
 	env.ssao_enabled = true
+	env.ssao_radius = 1.4
+	env.ssao_intensity = 1.6
+	env.ssil_enabled = true
 	env.glow_enabled = true
-	env.glow_intensity = 0.4
+	env.glow_intensity = 0.55
+	env.glow_bloom = 0.06
+	env.glow_hdr_threshold = 1.1
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.06
+	env.adjustment_saturation = 0.92
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-24, -35, 0)
-	sun.light_color = Color(1.0, 0.78, 0.58)
-	sun.light_energy = 1.25
+	sun.rotation_degrees = Vector3(-28, -38, 0)
+	sun.light_color = Color(1.0, 0.86, 0.68)
+	sun.light_energy = 1.45
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 90.0
+	sun.shadow_blur = 1.5
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.directional_shadow_max_distance = 120.0
+	sun.light_angular_distance = 0.6
 	add_child(sun)
+	# drifting dust motes for atmosphere
+	var dust := CPUParticles3D.new()
+	dust.amount = 220
+	dust.lifetime = 12.0
+	dust.preprocess = 12.0
+	dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	dust.emission_box_extents = Vector3(60, 6, 60)
+	dust.position = Vector3(0, 5, 0)
+	dust.direction = Vector3(1, 0.1, 0.3)
+	dust.spread = 30.0
+	dust.gravity = Vector3.ZERO
+	dust.initial_velocity_min = 0.2
+	dust.initial_velocity_max = 0.6
+	var dm := QuadMesh.new()
+	dm.size = Vector2(0.03, 0.03)
+	dust.mesh = dm
+	var dmat := StandardMaterial3D.new()
+	dmat.albedo_color = Color(1.0, 0.92, 0.75, 0.5)
+	dmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dmat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	dust.material_override = dmat
+	add_child(dust)
 
 func setup(r: Room, mid: String, sid: String) -> void:
 	is_server = true

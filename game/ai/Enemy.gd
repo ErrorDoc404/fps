@@ -78,9 +78,8 @@ func setup(id: int, t: String, w: Node, patrol_points: Array, server: bool) -> v
 		add_child(agent)
 		state = State.PATROL if patrol.size() > 1 else State.IDLE
 	else:
-		var c: Array = def["color"]
 		model = SoldierModel.new()
-		model.build(Color(c[0], c[1], c[2]).darkened(0.2), Color(c[0], c[1], c[2]), Color(0.8, 0.1, 0.1), true, s)
+		model.build_kind(def.get("model", "infantry"), def.get("weapon_model", "ar_b"), s)
 		add_child(model)
 
 func _ready() -> void:

@@ -11,6 +11,7 @@ var _stopping := false
 
 func _ready() -> void:
 	Engine.max_fps = 60
+	Geo.visuals = false   # dedicated server: colliders only, no meshes/materials/textures
 	var port := Args.get_int("port", Net.DEFAULT_PORT)
 	var data_dir := Args.get_value("data-dir", "user://server_data")
 	Session.store = ProfileStore.new(data_dir)

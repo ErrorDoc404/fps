@@ -1,6 +1,9 @@
-# Project Status — 2026-10-31
+# Project Status — 2026-10-31 (visual overhaul)
 
-**Build:** v0.1.0 · Godot 4.3-stable · MVP cooperative loop (M0–M5) implemented and verified; graybox art.
+**Build:** v0.1.0 · Godot 4.3-stable · MVP cooperative loop (M0–M5) implemented and verified.
+**Visuals:** the supplied Synty sprites are used throughout the UI and as in-world decals, signage and insignia. 3D content is
+detailed procedural low-poly art with PBR materials, because the supplied pack contains no 3D models (see ASSET_MAPPING.md).
+Screenshots are in `docs/screenshots/` (Forward+ renderer).
 
 ## Verified (evidence)
 | Area | How verified | Result |

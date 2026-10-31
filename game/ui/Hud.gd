@@ -70,6 +70,7 @@ func _ready() -> void:
 	world.local_player_ready.connect(func(p): p.inventory_changed.connect(_on_inventory))
 	Session.chat_received.connect(_on_chat)
 	_show_intro()
+	_build_scope_and_loading()
 
 # ------------------------------------------------------------------ construction
 func _anchor(c: Control, preset: int, offset: Vector2) -> Control:
@@ -141,7 +142,7 @@ func _build_weapon() -> void:
 	_mode.position = Vector2(224, 62)
 	box.add_child(_mode)
 	_equip_box = HBoxContainer.new()
-	_equip_box.position = Vector2(18, 102)
+	_equip_box.position = Vector2(14, -66)
 	_equip_box.add_theme_constant_override("separation", 14)
 	box.add_child(_equip_box)
 
@@ -266,6 +267,48 @@ func _build_overlays() -> void:
 	dv.add_child(_downed_label)
 	_downed.visible = false
 
+var _scope: Control
+var _loading: Control
+var _spinner: TextureRect
+var _ready_t := 0.0
+
+func _build_scope_and_loading() -> void:
+	# Marksman scope overlay from the supplied sniper reticle + scope vignette sprites.
+	_scope = Control.new()
+	_scope.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(UiKit.full_rect(_scope))
+	var vg := TextureRect.new()
+	vg.texture = UiKit.tex(UiKit.SPR_SCOPE_VIGNETTE)
+	vg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	vg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vg.modulate = Color(0, 0, 0, 1)
+	_scope.add_child(UiKit.full_rect(vg))
+	for rel in [UiKit.SPR_SCOPE_RING, UiKit.SPR_SCOPE_CROSS]:
+		var r := UiKit.icon(rel, 360, Color(0.05, 0.05, 0.05, 0.95))
+		r.set_anchors_preset(Control.PRESET_CENTER)
+		r.position = Vector2(-180, -180)
+		r.size = Vector2(360, 360)
+		_scope.add_child(r)
+	_scope.visible = false
+	# Deployment loading cover (sample screenshot backdrop + Synty loading icon) until the operator spawns.
+	_loading = Control.new()
+	_loading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(UiKit.full_rect(_loading))
+	UiKit.backdrop(_loading, UiKit.SHOT_MENU, 0.5)
+	var v := VBoxContainer.new()
+	v.set_anchors_preset(Control.PRESET_CENTER)
+	v.position = Vector2(-300, -120)
+	v.custom_minimum_size = Vector2(600, 0)
+	_loading.add_child(v)
+	_spinner = UiKit.icon(UiKit.SPR_LOADING, 96, UiKit.ACCENT)
+	_spinner.pivot_offset = Vector2(48, 48)
+	_spinner.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(_spinner)
+	for l in [UiKit.label("DEPLOYING", 40, UiKit.ACCENT, true), UiKit.label("%s  %s" % [world.mission.get("code", ""), world.mission.get("name", "")], 20, UiKit.TEXT, true),
+			UiKit.label(world.mission.get("environment", ""), 16, UiKit.DIM)]:
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(l)
+
 func _show_intro() -> void:
 	_intro = VBoxContainer.new()
 	_intro.set_anchors_preset(Control.PRESET_CENTER)
@@ -311,9 +354,12 @@ func _on_inventory(inv: Dictionary) -> void:
 		var e := GameData.equip(id)
 		var cnt := int(inv["equipment"][id])
 		var cd: bool = inv.get("cooldowns", {}).has(id)
-		var h := HBoxContainer.new()
-		h.add_child(UiKit.icon(e["icon"], 22, UiKit.DIM if cnt == 0 or cd else UiKit.TEXT))
-		h.add_child(UiKit.label("%s×%d" % [keys.get(id, ""), cnt], 13, UiKit.DIM if cnt == 0 else UiKit.TEXT))
+		var h := VBoxContainer.new()
+		h.add_theme_constant_override("separation", -4)
+		h.add_child(UiKit.socket(UiKit.equip_render(id), 46, str(cnt), e["name"], cnt == 0 or cd))
+		var k := UiKit.label(keys.get(id, ""), 12, UiKit.ACCENT, true)
+		k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		h.add_child(k)
 		_equip_box.add_child(h)
 
 func _on_objectives(st: Dictionary) -> void:
@@ -412,6 +458,13 @@ func _world_alive() -> bool:
 	return is_instance_valid(world) and world.is_inside_tree() and is_instance_valid(world.local_player)
 
 func _process(dt: float) -> void:
+	if is_instance_valid(_loading):
+		_spinner.rotation += dt * 4.0
+		if _world_alive() and not world.local_player.inv_mirror.is_empty():
+			_ready_t += dt
+			_loading.modulate.a = clampf(1.0 - (_ready_t - 0.3) * 2.0, 0.0, 1.0)
+			if _ready_t > 0.8:
+				_loading.queue_free()
 	if not _world_alive():
 		return
 	var lp: Player = world.local_player
@@ -445,6 +498,11 @@ func _process(dt: float) -> void:
 		_downed_label.text = "ELIMINATED\nYou will rejoin when the squad completes a primary objective."
 	var ads: bool = lp.motor["ads"]
 	_crosshair.visible = not ads and not downed and not elim and not lp.motor["sprinting"]
+	var rig: Node = lp.get_node_or_null("Rig")
+	var scoped: bool = rig != null and rig._ads > 0.85 and GameData.weapon(rig._vm_weapon).get("model", "") == "dmr"
+	_scope.visible = scoped
+	if rig:
+		rig.set_viewmodel_hidden(scoped)
 	# interaction prompt (client-side query; server validates the actual hold)
 	var it: Dictionary = world.find_interaction(lp, false) if lp.is_alive_net() else {}
 	_prompt.visible = not it.is_empty()
@@ -470,8 +528,7 @@ func _update_squad() -> void:
 			row.add_theme_constant_override("separation", 6)
 			var c := GameData.klass(p.class_id)
 			var col: Array = c["color"]
-			var ic := UiKit.icon(c["icon"], 26, Color(col[0], col[1], col[2]))
-			row.add_child(ic)
+			row.add_child(UiKit.portrait_card(p.class_id, 40, p.is_local))
 			var v := VBoxContainer.new()
 			v.add_theme_constant_override("separation", 1)
 			var name_l := UiKit.label(p.display_name, 14, UiKit.ACCENT if p.is_local else UiKit.TEXT, true)

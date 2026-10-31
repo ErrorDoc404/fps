@@ -10,10 +10,8 @@ func _init(a: Node, results: Dictionary) -> void:
 	UiKit.full_rect(self)
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.045)
-	add_child(UiKit.full_rect(bg))
 	var ok: bool = r.get("result", "") == "completed"
+	UiKit.backdrop(self, UiKit.SHOT_RESULTS if ok else UiKit.SHOT_FAILED, 0.72)
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_CENTER)
 	root.position = Vector2(-520, -330)
@@ -54,7 +52,10 @@ func _ready() -> void:
 	for h in ["OPERATOR", "CLASS", "KILLS", "DOWNS", "REVIVES", "STATUS", "XP"]:
 		grid.add_child(UiKit.label(h, 13, UiKit.ACCENT, true))
 	for s in r.get("squad", []):
-		grid.add_child(UiKit.label(s["name"], 15))
+		var nm := HBoxContainer.new()
+		nm.add_child(UiKit.portrait_card(s["class"], 30))
+		nm.add_child(UiKit.label(s["name"], 15))
+		grid.add_child(nm)
 		grid.add_child(UiKit.label(GameData.klass(s["class"]).get("name", ""), 15, UiKit.DIM))
 		grid.add_child(UiKit.label(str(s["kills"]), 15))
 		grid.add_child(UiKit.label(str(s["downs"]), 15))
@@ -70,6 +71,7 @@ func _ready() -> void:
 	var rh := HBoxContainer.new()
 	rh.add_theme_constant_override("separation", 14)
 	rw.add_child(rh)
+	rh.add_child(UiKit.icon(UiKit.rank_badge(int(prof.get("level", 1))), 64))
 	rh.add_child(UiKit.icon(UiKit.ICON_XP, 36, UiKit.ACCENT))
 	rh.add_child(UiKit.label("+%d XP" % you.get("xp", 0), 26, UiKit.ACCENT, true))
 	rh.add_child(UiKit.icon(UiKit.ICON_CREDITS, 34, UiKit.ACCENT))
@@ -86,7 +88,14 @@ func _ready() -> void:
 		if int(GameData.weapon(wid)["unlock_level"]) == int(prof.get("level", 1)) and int(prof.get("level", 1)) > 1:
 			unlocks.append(GameData.weapon(wid)["name"])
 	if not unlocks.is_empty():
-		lv.add_child(UiKit.label("UNLOCKED: " + ", ".join(unlocks), 16, UiKit.OK, true))
+		var ul := HBoxContainer.new()
+		ul.add_child(UiKit.label("UNLOCKED: " + ", ".join(unlocks), 16, UiKit.OK, true))
+		for wid in GameData.weapons:
+			if unlocks.has(GameData.weapon(wid)["name"]):
+				var wi := UiKit.icon(GameData.weapon(wid)["render"], 0)
+				wi.custom_minimum_size = Vector2(120, 60)
+				ul.add_child(wi)
+		lv.add_child(ul)
 	rh.add_child(lv)
 	root.add_child(rw)
 	root.add_child(UiKit.button("RETURN TO HQ", func(): app.show_lobby(), 300))

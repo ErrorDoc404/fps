@@ -9,22 +9,16 @@ func _init(a: Node) -> void:
 	UiKit.full_rect(self)
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.045)
-	add_child(UiKit.full_rect(bg))
-	var vig := TextureRect.new()
-	vig.texture = UiKit.tex(UiKit.SPR_VIGNETTE)
-	vig.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	vig.modulate = Color(0.0, 0.0, 0.0, 0.8)
-	add_child(UiKit.full_rect(vig))
-	var scan := TextureRect.new()
-	scan.texture = UiKit.tex(UiKit.SPR_SCANLINES)
-	scan.stretch_mode = TextureRect.STRETCH_TILE
-	scan.modulate = Color(0.6, 0.7, 0.5, 0.05)
-	add_child(UiKit.full_rect(scan))
-	var techy := UiKit.icon(UiKit.SPR_TECHY, 300, Color(UiKit.ACCENT, 0.25))
+	UiKit.backdrop(self, UiKit.SHOT_MENU, 0.55)
+	var rail := UiKit.icon(UiKit.SPR_RAIL, 0, Color(1, 1, 1, 0.9))   # Synty rail strip across the top
+	rail.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	rail.custom_minimum_size.y = 40
+	rail.size.y = 40
+	rail.stretch_mode = TextureRect.STRETCH_SCALE
+	add_child(rail)
+	var techy := UiKit.icon(UiKit.SPR_TECHY, 260, Color(UiKit.ACCENT, 0.3))
 	techy.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	techy.position -= Vector2(340, 120)
+	techy.position -= Vector2(300, 110)
 	add_child(techy)
 
 	var root := HBoxContainer.new()
@@ -35,11 +29,18 @@ func _ready() -> void:
 	root.offset_bottom = -60
 	root.add_theme_constant_override("separation", 60)
 	add_child(root)
+	var lp := UiKit.panel(Vector2(400, 0))
+	lp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	root.add_child(lp)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 10)
-	root.add_child(left)
+	lp.add_child(left)
 	left.add_child(UiKit.label("OPERATION:", 34, UiKit.DIM, true))
 	left.add_child(UiKit.label("BLACKOUT", 72, UiKit.ACCENT, true))
+	var emblem := HBoxContainer.new()
+	emblem.add_child(UiKit.icon("Badges/SPR_MilitaryCombat_Badge_Wings_02_Gold.png", 40))
+	emblem.add_child(UiKit.label("TASK FORCE BLACKOUT", 16, UiKit.TEXT, true))
+	left.add_child(emblem)
 	left.add_child(UiKit.label("Four operators. One mission. No one left behind.", 18, UiKit.DIM))
 	var sp := Control.new()
 	sp.custom_minimum_size.y = 30
@@ -95,8 +96,8 @@ func _equipment_panel() -> Control:
 		var w := GameData.weapon(id)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
-		var ic := UiKit.icon(w["icon"], 0, UiKit.TEXT)
-		ic.custom_minimum_size = Vector2(120, 60)
+		var ic := UiKit.icon(w["render"], 0)
+		ic.custom_minimum_size = Vector2(150, 76)
 		row.add_child(ic)
 		var col := VBoxContainer.new()
 		col.add_child(UiKit.label("%s  [%s]" % [w["name"], w["category"].replace("_", " ").to_upper()], 18, UiKit.TEXT, true))

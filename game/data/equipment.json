@@ -1,12 +1,60 @@
 [
-	{"id": "medkit", "name": "Medical Kit", "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Healing_01_Clean.png",
-	 "effect": "heal_self", "amount": 50, "use_time": 2.0, "cooldown": 1.0, "unlock_level": 1},
-	{"id": "smoke", "name": "Smoke Device", "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_GrenadeSmoke_01_Clean.png",
-	 "effect": "smoke", "radius": 5.0, "duration": 14.0, "throw_speed": 14.0, "cooldown": 1.0, "unlock_level": 1},
-	{"id": "flash", "name": "Flash Device", "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_GrenadeFlashbang_01_Clean.png",
-	 "effect": "flash", "radius": 8.0, "stun": 3.5, "fuse": 1.4, "throw_speed": 14.0, "cooldown": 1.0, "unlock_level": 2},
-	{"id": "recon_pulse", "name": "Recon Pulse", "icon": "Icons_Special/ICON_MilitaryCombat_Special_Drone_01_Clean.png",
-	 "effect": "reveal", "radius": 35.0, "duration": 10.0, "cooldown": 25.0, "unlock_level": 1},
-	{"id": "ammo_supply", "name": "Ammunition Supply", "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Ammo_Bullets_01_Clean.png",
-	 "effect": "resupply", "radius": 6.0, "magazines": 2, "cooldown": 30.0, "unlock_level": 1}
+ {
+  "id": "medkit",
+  "name": "Medical Kit",
+  "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Healing_01_Clean.png",
+  "effect": "heal_self",
+  "amount": 50,
+  "use_time": 2.0,
+  "cooldown": 1.0,
+  "unlock_level": 1,
+  "render": "Icons_Resources/ICON_SM_Prop_MedicalBox_02_BattleRoyale.png"
+ },
+ {
+  "id": "smoke",
+  "name": "Smoke Device",
+  "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_GrenadeSmoke_01_Clean.png",
+  "effect": "smoke",
+  "radius": 5.0,
+  "duration": 14.0,
+  "throw_speed": 14.0,
+  "cooldown": 1.0,
+  "unlock_level": 1,
+  "render": "Icons_Resources/ICON_SM_Wep_Grenade_Smoke_01_Military.png"
+ },
+ {
+  "id": "flash",
+  "name": "Flash Device",
+  "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_GrenadeFlashbang_01_Clean.png",
+  "effect": "flash",
+  "radius": 8.0,
+  "stun": 3.5,
+  "fuse": 1.4,
+  "throw_speed": 14.0,
+  "cooldown": 1.0,
+  "unlock_level": 2,
+  "render": "Icons_Resources/ICON_SM_Wep_Flashbang_01_Military.png"
+ },
+ {
+  "id": "recon_pulse",
+  "name": "Recon Pulse",
+  "icon": "Icons_Special/ICON_MilitaryCombat_Special_Drone_01_Clean.png",
+  "effect": "reveal",
+  "radius": 35.0,
+  "duration": 10.0,
+  "cooldown": 25.0,
+  "unlock_level": 1,
+  "render": "Icons_Resources/ICON_SM_Chr_Attach_Radio_01_Military.png"
+ },
+ {
+  "id": "ammo_supply",
+  "name": "Ammunition Supply",
+  "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Ammo_Bullets_01_Clean.png",
+  "effect": "resupply",
+  "radius": 6.0,
+  "magazines": 2,
+  "cooldown": 30.0,
+  "unlock_level": 1,
+  "render": "Icons_Resources/ICON_SM_Prop_AmmoBox_04_Military.png"
+ }
 ]

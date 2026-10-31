@@ -19,9 +19,7 @@ func _init(a: Node) -> void:
 	UiKit.full_rect(self)
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.045, 0.05, 0.045)
-	add_child(UiKit.full_rect(bg))
+	UiKit.backdrop(self, UiKit.SHOT_BROWSER, 0.7)
 	var root := VBoxContainer.new()
 	UiKit.full_rect(root)
 	root.offset_left = 30; root.offset_right = -30; root.offset_top = 22; root.offset_bottom = -20

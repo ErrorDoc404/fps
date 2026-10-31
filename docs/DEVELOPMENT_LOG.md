@@ -37,3 +37,22 @@
   server browser with Favorites/History and live status and ping. Website lists rooms. Protocol bumped to `blackout-0.2`.
 - Fixed a client crash: after mission end the HUD kept reading the freed world's camera. The UI is now disabled before the world is freed.
 - Test: 6 clients / 3 rooms / 2 concurrent missions → 93/93 on the exported build. ARM64 build boots under emulation and serves status.
+
+## 2026-10-31: Visual overhaul (supplied Synty assets + procedural 3D)
+- Re-audited `SourceFiles/` and checked `master` for new uploads: the pack is 2D only (HUD sprites, textured frames, icon sets,
+  prop/weapon renders, badges, FX, cursors, input prompts, sample screenshots and portraits, and a font). It has no 3D models,
+  textures or audio.
+- UI: new theme built from MilitaryCombat textured boxes and bars. Additions: sample-screenshot backdrops, operator portraits in metal
+  frames, rank badges, colour weapon renders, item renders in hex sockets, DMR scope overlay, deployment loading screen with the
+  Synty spinner, and the Synty cursor.
+- World: rebuilt OP-01 with chamfered low-poly architecture (corrugated warehouse with plinth, columns, trusses and skylights;
+  brick maintenance block; perimeter with pillars and razor wire), detailed props (containers, trucks, forklift, racks, pallets,
+  barrels, sandbags, guard tower, tanks, generator, fences, lamps), procedural PBR materials, decals, signage, Dominion banners,
+  warm haze lighting, SSAO/SSIL, volumetric fog and dust. Colliders are unchanged, so gameplay and AI navigation are identical.
+- Characters: Task Force operators (arid camo, plate carriers, helmets with goggles or NVG, class patches) and Dominion rifleman, heavy,
+  spotter and officer variants, each holding real weapon models.
+- Weapons: 5 detailed models whose silhouettes follow the supplied side renders. They have open-window optics for ADS, gloved hands and
+  a muzzle flash from the supplied glow sprite.
+- Dedicated server: `Geo.visuals = false`, so it builds no meshes, materials or textures, and the server export excludes `assets/*`
+  (pck 371 KB). Fixed a first-use texture-generation stall by pre-generating materials at load (120 ms).
+- Verification: 93/93 multiplayer checks (exported build), rendered Forward+ screenshots, Windows and Linux (x86_64/ARM64) exports.

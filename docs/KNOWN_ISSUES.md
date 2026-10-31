@@ -1,9 +1,13 @@
 # Known Issues & Limitations
 
 ## Content / presentation
-- **No 3D art or audio was supplied.** Environments, operators, enemies, weapons and arms are graybox primitives built in code;
-  sounds are procedurally synthesised. Animations are procedural poses (no skeletal rigs).
-- First-person arms are simple blocks; reload is a procedural dip + magazine drop.
+- **No 3D art or audio was supplied** (the pack is 2D only). Environments, operators, enemies, weapons and arms are detailed procedural
+  low-poly meshes with procedural PBR materials, and use supplied sprites for decals, signage and insignia. They are not authored models.
+  Characters use procedural poses, not skeletal rigs, so limbs are rigid segments. Sounds are procedurally synthesised.
+  Importing real Synty POLYGON packs (characters, weapons, environment FBX + texture atlas) is the main remaining visual upgrade.
+- First-person reload is a procedural tilt + magazine drop; there are no hand/finger animations.
+- Volumetric fog, SSAO/SSIL and glow apply in the Forward+ renderer (Windows/Vulkan). They were verified with lavapipe (software Vulkan)
+  under Xvfb, at low frame rates. Real-GPU performance has not been profiled yet.
 - The `.unitypackage` named in the spec is not in the repository (only the source sprites are), so no Synty Unity prefabs/layouts were used.
 
 ## Networking

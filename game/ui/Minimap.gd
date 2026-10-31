@@ -7,7 +7,7 @@ const RANGE := 45.0   # metres shown from centre to edge
 func _ready() -> void:
 	custom_minimum_size = Vector2(230, 230)
 	clip_contents = true
-	var ring := UiKit.icon(UiKit.SPR_MAP_RING, 230, Color(UiKit.ACCENT, 0.7))
+	var ring := UiKit.icon(UiKit.SPR_DIAL, 230, Color(1, 1, 1, 0.95))   # textured Synty dial bezel
 	add_child(UiKit.full_rect(ring))
 
 func _process(_dt: float) -> void:

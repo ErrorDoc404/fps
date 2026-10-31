@@ -11,8 +11,12 @@
 - Weapon icons are 2048×1024 (`_Clean`, `_Side`, `_Underlay`) plus 1024×1024 previews: displayed scaled with `STRETCH_KEEP_ASPECT_CENTERED`.
 - Fonts: Oxanium Light/Medium/Bold TTF (SIL OFL) — imported as Godot `FontFile`.
 - `Samples/` are reference screenshots/portraits from the vendor; used only for visual reference, not shipped.
-- No animation assets (sprite sheets, Lottie, Unity clips) exist → HUD animation done in code (tweens, progress fills, rotation).
-- No 3D models, no audio. Gameplay visuals are graybox primitives; audio is procedurally generated (`audio/Sfx.gd`).
+- No animation assets (sprite sheets, Lottie, Unity clips) exist, so HUD animation is done in code (tweens, progress fills, rotation).
+- **No 3D models, environment textures or audio** were supplied (verified again 2026-10-31 on `master` and the working branch).
+  `Icons_Resources/` and `Icons_Weapons/` contain *2D renders* of Synty 3D props and weapons. They are used as UI art and as
+  silhouette references, never presented as 3D geometry. All 3D content is procedural (see ASSET_MAPPING.md, "Procedural replacements").
+- `Samples/` screenshots and portraits are used as menu backdrops and operator portraits. The 5040×2160 screenshots are imported as
+  converted 1920 px copies to keep the build small.
 
 ## Preservation
 - `SourceFiles/` is never modified. `tools/import_assets.py` copies only referenced files into

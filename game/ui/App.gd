@@ -13,6 +13,9 @@ var _toast: Label
 var _holder: Node
 
 func _ready() -> void:
+	var cur := UiKit.tex_sized(UiKit.CURSOR, 32)
+	if cur:
+		Input.set_custom_mouse_cursor(cur, Input.CURSOR_ARROW, Vector2(4, 4))
 	ui = CanvasLayer.new()
 	ui.layer = 10
 	add_child(ui)

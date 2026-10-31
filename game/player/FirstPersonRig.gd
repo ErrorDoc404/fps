@@ -3,8 +3,8 @@ extends Node3D
 ## ADS transition, reload/switch animation, sprint pose and damage shake. No gameplay authority.
 
 const VM_SCALE := 0.3          # view model is scaled toward the camera so it never clips into walls
-const HIP_POS := Vector3(0.17, -0.2, -0.5)
-const SPRINT_POS := Vector3(0.12, -0.26, -0.42)
+const HIP_POS := Vector3(0.15, -0.17, -0.4)
+const SPRINT_POS := Vector3(0.1, -0.23, -0.34)
 const SPRINT_ROT := Vector3(-0.35, 0.8, 0.25)
 
 var player: Player
@@ -24,7 +24,7 @@ var _last_yaw := 0.0
 var _last_pitch := 0.0
 var _switch_anim := 0.0
 var _flash: OmniLight3D
-var _flash_mesh: MeshInstance3D
+var _flash_mesh: Node3D
 var _flash_t := 0.0
 var _eye := 1.65
 
@@ -59,8 +59,24 @@ func _on_inv(inv: Dictionary) -> void:
 		_vm_anchor.add_child(_vm)
 		_set_no_shadow(_vm)
 		_switch_anim = 1.0
-		_flash_mesh = Geo.sphere(0.035, Color(1, 0.85, 0.5), Vector3.ZERO, _vm.get_node("Muzzle"))
-		_flash_mesh.material_override = Geo.mat(Color(1, 0.8, 0.4), 1.0, 0.0, Color(1, 0.7, 0.3))
+		# muzzle flash: supplied Synty FX glow sprite, additive billboard
+		var fl := Sprite3D.new()
+		fl.texture = UiKit.tex("FX/SPR_FX_MilitaryCombat_Glow_01.png")
+		fl.modulate = Color(1.0, 0.75, 0.35)
+		fl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		fl.pixel_size = 0.12 / float(maxi(1, fl.texture.get_width())) if fl.texture else 0.001
+		fl.shaded = false
+		fl.no_depth_test = false
+		var fm := StandardMaterial3D.new()
+		fm.albedo_texture = fl.texture
+		fm.albedo_color = Color(1.0, 0.75, 0.35)
+		fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		fm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		fl.material_override = fm
+		_vm.get_node("Muzzle").add_child(fl)
+		_flash_mesh = fl
 		_flash_mesh.visible = false
 
 func _set_no_shadow(n: Node) -> void:
@@ -85,6 +101,9 @@ func on_fire(def: Dictionary) -> void:
 		player.world.fx.tracer(from, to)
 		if hit and hit["collider"] is StaticBody3D:
 			player.world.fx.impact(hit["position"], hit["normal"])
+
+func set_viewmodel_hidden(h: bool) -> void:
+	_pivot.visible = not h
 
 func dry_fire() -> void:
 	Sfx.play_2d("dry", -6.0)
@@ -129,7 +148,7 @@ func _process(dt: float) -> void:
 	# view model placement
 	if _vm:
 		var sight_y: float = _vm.get_node("Sight").position.y
-		var ads_pos := Vector3(0, -sight_y, -0.34)
+		var ads_pos := Vector3(0, -sight_y, -0.24 if def.get("model", "") != "dmr" else -0.17)
 		var pos := HIP_POS.lerp(ads_pos, _ads)
 		var rot := Vector3.ZERO
 		var sprint_blend := 1.0 if m["sprinting"] else 0.0

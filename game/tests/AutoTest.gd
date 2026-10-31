@@ -224,6 +224,13 @@ func _leader_mission() -> void:
 		return
 	await get_tree().create_timer(1.5).timeout
 	await shot("02_spawn")
+	for p in w.players.values():   # close-up of a squadmate (third-person operator model)
+		if p != lp and Args.get_value("screenshots", "") != "":
+			_ctrl().yaw = atan2(-(p.global_position.x - lp.global_position.x), -(p.global_position.z - lp.global_position.z))
+			_ctrl().pitch = -0.05
+			await get_tree().create_timer(0.5).timeout
+			await shot("02b_squadmate")
+			break
 	# --- movement (prediction vs authoritative position)
 	_ctrl().yaw = PI  # face south (+Z), open ground behind spawn
 	await get_tree().create_timer(0.3).timeout
@@ -265,6 +272,10 @@ func _leader_mission() -> void:
 			target = e
 	var mag0: int = lp.inv_mirror["weapons"][0]["mag"]
 	await _teleport(target.global_position + Vector3(0, 0.2, 7))
+	if Args.get_value("screenshots", "") != "":
+		_look_at(target.global_position + Vector3.UP * 1.0)
+		await get_tree().create_timer(0.4).timeout
+		await shot("03a_enemy")
 	var killed := false
 	for i in range(200):
 		if target.is_dead():
@@ -320,6 +331,11 @@ func _leader_mission() -> void:
 	# --- objectives
 	await _teleport(Vector3(0, 0.2, -6))
 	check("objective_infiltrate", await _wait_until(func(): return _status("obj_infiltrate") == "completed", 3.0))
+	if Args.get_value("screenshots", "") != "":
+		_ctrl().yaw = 1.2   # look west across the rack rows
+		_ctrl().pitch = 0.05
+		await get_tree().create_timer(0.6).timeout
+		await shot("05a_warehouse")
 	await _teleport(Vector3(15, 0.2, -21.0))
 	_look_at(Vector3(15, 1.0, -22.5))
 	await get_tree().create_timer(0.3).timeout
