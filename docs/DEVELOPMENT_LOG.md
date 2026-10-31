@@ -24,3 +24,9 @@
   Windows client zip from `<server dir>/downloads/`. `tools/build.sh` now produces `dist/OperationBlackout-Windows.zip` and
   `dist/OperationBlackout-Server-Linux.zip` (the server bundle includes the client zip in `downloads/`).
 - Verified with the exported server: page, status JSON, full download with matching checksum, 404/405 handling; co-op regression 45/45.
+
+## 2026-10-31: ARM64 dedicated server
+- Added the "Linux Dedicated Server ARM64" export preset and `dist/OperationBlackout-Server-Linux-ARM64.zip` (for Ampere hosts).
+  `run_server.sh` now restores the exec bit and cd's to its own folder (panel uploads often drop permissions).
+- Verified under qemu-aarch64: the server boots, the website serves the client, and the 4-bot mission completes (44/45; walk speed
+  slowed by emulation). `run_coop_test.sh` accepts `BOT_ARGS` and `SERVER_BOOT`.

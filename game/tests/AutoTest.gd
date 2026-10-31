@@ -142,6 +142,7 @@ func _look_at(target: Vector3) -> void:
 func _teleport(pos: Vector3) -> void:
 	_world.rpc_id(1, "c_test", "teleport", pos)
 	await get_tree().create_timer(0.6).timeout
+	Log.info("test", "teleported", {"want": str(pos), "local": str(_world.local_player.global_position), "server": str(_ctrl().last_server_pos)})
 
 func _wait_until(cond: Callable, secs: float) -> bool:
 	var t := 0.0

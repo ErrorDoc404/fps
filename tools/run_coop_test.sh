@@ -17,10 +17,10 @@ SPATHARG=()
 
 "$SERVER" --headless "${SPATHARG[@]}" -- --server --port=$PORT --data-dir="$DATA" --allow-test-commands --log-file="$OUT/server.log" > "$OUT/server.stdout" 2>&1 &
 SPID=$!
-sleep 2
+sleep ${SERVER_BOOT:-2}
 bot() { # role class name
   "$GODOT" --headless "${PATHARG[@]}" -- --autotest --connect=127.0.0.1:$PORT --role=$1 --class=$2 --profile=$3 --name=$3 \
-    --expect=4 --report="$OUT/$3.json" --timeout=200 > "$OUT/$3.log" 2>&1 &
+    ${BOT_ARGS:-} --expect=4 --report="$OUT/$3.json" --timeout=200 > "$OUT/$3.log" 2>&1 &
   PIDS+=($!)
 }
 PIDS=()

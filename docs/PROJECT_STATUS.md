@@ -17,6 +17,7 @@ enemy kill; reload; weapon switching; downed replication; revive by teammate; in
 extraction unlock; extraction with all active operators; mission completed; XP/credits granted and persisted; return to lobby;
 a client disconnecting mid-mission does not break the mission.
 
+| ARM64 server | Exported `blackout_server.arm64` run under qemu-aarch64 emulation, 4 bots | Mission completed. 44/45 checks pass; the walk-speed check missed (2.29 m/s) because of CPU load from emulation. Download site served the client |
 | Download website | Exported server zip unpacked → `curl` page/status/download, Chromium screenshot | 200 OK; 30 MB client zip downloaded at ~60 MB/s with an identical SHA-256; traversal/unknown files → 404, POST → 405 |
 
 ## Implemented (MVP scope)

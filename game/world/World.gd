@@ -284,7 +284,8 @@ func c_test(cmd: String, arg: Variant) -> void:
 	var p := _sender_player()
 	if p == null:
 		return
-	Log.warn("test", "test command", {"cmd": cmd, "slot": p.slot})
+	Log.warn("test", "test command", {"cmd": cmd, "slot": p.slot, "pos": str(p.global_position), "hp": p.health.health,
+		"downed": p.health.is_downed, "elim": p.health.is_eliminated, "queue": p.input_queue.size(), "connected": p.connected})
 	match cmd:
 		"teleport": p.global_position = arg
 		"damage_self":

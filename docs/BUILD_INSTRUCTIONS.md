@@ -15,7 +15,8 @@ Outputs:
 - `build/linux_server/blackout_server.x86_64` + `.pck` + `run_server.sh` — Linux x86_64 dedicated server
 
 Packaged downloads (also committed in `dist/`):
-- `build/dist/OperationBlackout-Server-Linux.zip`: the server, `run_server.sh`, and `downloads/OperationBlackout-Windows.zip`
+- `build/dist/OperationBlackout-Server-Linux.zip`: x86_64 (Intel/AMD) server, `run_server.sh`, and `downloads/OperationBlackout-Windows.zip`
+- `build/dist/OperationBlackout-Server-Linux-ARM64.zip`: the same for ARM64 / aarch64 (Ampere, AWS Graviton, Oracle Ampere A1, Raspberry Pi 4/5)
 - `build/dist/OperationBlackout-Windows.zip`: the client on its own
 
 ## Run the dedicated server + download site (Linux)
@@ -33,6 +34,12 @@ Options: `--port`, `--http-port` (default 8080), `--downloads-dir` (default `<ex
 Run `OperationBlackout.exe`. Main menu → **JOIN SERVER** → `host:7777`, or **DEPLOY (SOLO / LOCAL)** which launches a local
 headless dedicated server from the same executable and connects to it.
 Multiple clients on one PC: `OperationBlackout.exe -- --profile=Second`.
+
+### Pterodactyl panel
+1. Server with 2 allocations (game UDP + website TCP), image `ghcr.io/parkervcp/yolks:debian`.
+2. Upload and unarchive the zip that matches the node CPU (ARM64 for Ampere).
+3. Startup: `bash OperationBlackout-Server/run_server.sh --port={{SERVER_PORT}} --http-port=<2nd port> --data-dir=./server_data`
+4. Done text: `dedicated server started`; stop command: `^C`.
 
 ## Run from source
 ```bash
