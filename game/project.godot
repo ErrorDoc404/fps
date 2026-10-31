@@ -1,0 +1,39 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+config/name="Operation: Blackout"
+config/description="Cooperative tactical first-person military shooter."
+config/version="0.1.0"
+run/main_scene="res://core/Boot.tscn"
+config/features=PackedStringArray("4.3", "Forward Plus")
+
+[autoload]
+Log="*res://autoload/Log.gd"
+GameData="*res://autoload/GameData.gd"
+Settings="*res://autoload/Settings.gd"
+Net="*res://autoload/Net.gd"
+Session="*res://autoload/Session.gd"
+Sfx="*res://audio/Sfx.gd"
+
+[display]
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[physics]
+common/physics_ticks_per_second=60
+
+[layer_names]
+3d_physics/layer_1="world"
+3d_physics/layer_2="players"
+3d_physics/layer_3="enemies"
+3d_physics/layer_4="interact"
+
+[rendering]
+anti_aliasing/quality/msaa_3d=1
+
+[navigation]
+3d/default_cell_size=0.25
+3d/default_cell_height=0.25

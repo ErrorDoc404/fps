@@ -1,0 +1,18 @@
+[
+	{"id": "assault", "name": "Assault", "role": "Combat specialist",
+	 "icon": "Icons_Weapons/ICON_SM_Wep_Rifle_Assault_01_BattleRoyale_Clean.png", "color": [0.85, 0.45, 0.25],
+	 "default_primary": "ar_a", "default_secondary": "pistol_a", "allowed_categories": ["assault_rifle", "submachine_gun", "designated_marksman_rifle", "pistol"],
+	 "equipment": {"medkit": 1, "flash": 2, "smoke": 1}, "modifiers": {"reserve_mult": 1.5, "revive_time_mult": 1.0, "armor_bonus": 10}},
+	{"id": "medic", "name": "Medic", "role": "Squad recovery",
+	 "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Healing_01_Clean.png", "color": [0.35, 0.8, 0.45],
+	 "default_primary": "smg_a", "default_secondary": "pistol_a", "allowed_categories": ["assault_rifle", "submachine_gun", "pistol"],
+	 "equipment": {"medkit": 4, "smoke": 2}, "modifiers": {"reserve_mult": 1.0, "revive_time_mult": 0.5, "revive_health_bonus": 25, "heal_teammate": true}},
+	{"id": "recon", "name": "Recon", "role": "Intelligence support",
+	 "icon": "Icons_Special/ICON_MilitaryCombat_Special_Drone_01_Clean.png", "color": [0.4, 0.65, 0.95],
+	 "default_primary": "dmr_a", "default_secondary": "pistol_a", "allowed_categories": ["designated_marksman_rifle", "submachine_gun", "assault_rifle", "pistol"],
+	 "equipment": {"medkit": 1, "recon_pulse": 1}, "modifiers": {"reserve_mult": 1.0, "revive_time_mult": 1.0, "intel_reward_mult": 1.5}},
+	{"id": "support", "name": "Support", "role": "Squad logistics",
+	 "icon": "Icons_Inventory/ICON_MilitaryCombat_Inventory_Ammo_Bullets_01_Clean.png", "color": [0.9, 0.8, 0.3],
+	 "default_primary": "ar_b", "default_secondary": "pistol_a", "allowed_categories": ["assault_rifle", "submachine_gun", "pistol"],
+	 "equipment": {"medkit": 1, "ammo_supply": 1, "smoke": 2}, "modifiers": {"reserve_mult": 1.25, "revive_time_mult": 1.0, "armor_bonus": 25}}
+]

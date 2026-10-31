@@ -1,0 +1,5 @@
+{
+	"level_xp": [400, 1000, 1800, 2800, 4000, 5500, 7500, 10000],
+	"rewards": {"kill_xp_share": true, "completion_credits": 300, "survival_xp": 100, "survival_credits": 50, "failure_mult": 0.25},
+	"titles": {"1": "Recruit", "2": "Operator", "3": "Specialist", "4": "Sergeant", "5": "Veteran", "6": "Lieutenant", "7": "Captain", "8": "Commander", "9": "Blackout"}
+}

@@ -1,0 +1,66 @@
+[
+	{"id": "op01", "code": "OP-01", "name": "FIRST CONTACT", "playable": true, "map": "industrial",
+	 "environment": "Abandoned industrial facility", "time_of_day": "dusk", "weather": "clear",
+	 "briefing": "Signals intelligence places Dominion activity inside the abandoned Vessk Industrial facility. Breach the main warehouse, recover the intelligence drive from the site office and reach the helicopter landing zone to the north. Expect armed resistance.",
+	 "radio": {"start": "Overwatch: Blackout team, you are on the ground. Move to the main warehouse.",
+	           "obj_infiltrate": "Overwatch: You're inside. Site office should be in the north-east corner.",
+	           "obj_intel": "Overwatch: Drive secured. Dominion reinforcements inbound - get to the LZ.",
+	           "extraction_open": "Overwatch: Bird is on station. Extraction is north of the warehouse.",
+	           "obj_server": "Overwatch: Server logs downloaded. Good work."},
+	 "spawn_points": [[-3, 0, 58], [-1, 0, 58], [1, 0, 58], [3, 0, 58]],
+	 "respawn": {"mode": "on_objective", "note": "Eliminated operators rejoin when the squad completes a primary objective."},
+	 "fail_conditions": {"all_down": true},
+	 "objectives": [
+		{"id": "obj_infiltrate", "name": "Breach the facility", "description": "Enter the main warehouse.",
+		 "type": "reach_zone", "zone": "warehouse_interior", "primary": true, "depends": [], "reward": {"xp": 100, "credits": 50}},
+		{"id": "obj_intel", "name": "Recover the intelligence drive", "description": "Download the drive from the laptop in the site office.",
+		 "type": "interact", "target": "intel_laptop", "hold_time": 4.0, "primary": true, "depends": ["obj_infiltrate"],
+		 "reward": {"xp": 250, "credits": 150}, "on_complete_spawn": "reinforcements"},
+		{"id": "obj_server", "name": "Download server logs", "description": "Optional: pull logs from the server rack in the maintenance building.",
+		 "type": "interact", "target": "data_server", "hold_time": 8.0, "primary": false, "depends": [],
+		 "reward": {"xp": 150, "credits": 120}, "on_start_spawn": "server_response"},
+		{"id": "obj_yard", "name": "Secure the loading yard", "description": "Optional: eliminate all hostiles in the loading yard.",
+		 "type": "secure_area", "zone": "loading_yard", "primary": false, "depends": [], "reward": {"xp": 120, "credits": 80}},
+		{"id": "obj_extract", "name": "Extract", "description": "Reach the landing zone. All active operators must be inside.",
+		 "type": "extraction", "zone": "extraction_zone", "hold_time": 8.0, "primary": true, "depends": ["obj_infiltrate", "obj_intel"],
+		 "reward": {"xp": 200, "credits": 100}, "rule": "all_active_inside"}
+	 ],
+	 "enemy_groups": {
+		"initial": [
+			{"type": "infantry", "pos": [-8, 0, 22], "patrol": [[-14, 0, 18], [6, 0, 30], [12, 0, 20]]},
+			{"type": "infantry", "pos": [10, 0, 26], "patrol": []},
+			{"type": "recon", "pos": [16, 0, 32], "patrol": [[16, 0, 32], [-16, 0, 32]]},
+			{"type": "infantry", "pos": [-12, 0, 0], "patrol": [[-12, 0, 0], [-12, 0, -18]]},
+			{"type": "heavy", "pos": [4, 0, -8], "patrol": []},
+			{"type": "infantry", "pos": [12, 0, -4], "patrol": [[12, 0, -4], [12, 0, -16]]},
+			{"type": "command", "pos": [11, 0, -18], "patrol": []},
+			{"type": "infantry", "pos": [-38, 0, -2], "patrol": [[-38, 0, -2], [-30, 0, 10]]},
+			{"type": "infantry", "pos": [-24, 0, -30], "patrol": [[-24, 0, -30], [20, 0, -30]]},
+			{"type": "recon", "pos": [22, 0, -40], "patrol": []}
+		],
+		"reinforcements": [
+			{"type": "infantry", "pos": [-10, 0, -60], "patrol": [], "hunt": true},
+			{"type": "infantry", "pos": [10, 0, -60], "patrol": [], "hunt": true},
+			{"type": "heavy", "pos": [0, 0, -62], "patrol": [], "hunt": true},
+			{"type": "infantry", "pos": [40, 0, -20], "patrol": [], "hunt": true}
+		],
+		"server_response": [
+			{"type": "infantry", "pos": [-58, 0, 10], "patrol": [], "hunt": true},
+			{"type": "infantry", "pos": [-58, 0, -18], "patrol": [], "hunt": true},
+			{"type": "recon", "pos": [-55, 0, 25], "patrol": [], "hunt": true}
+		]
+	 },
+	 "rewards": {"completion_xp": 300, "completion_credits": 200}},
+	{"id": "op02", "code": "OP-02", "name": "SILENT ENTRY", "playable": false, "environment": "Urban outskirts",
+	 "briefing": "Locate and rescue captured personnel. Requires campaign milestone M6.", "unlock_after": "op01"},
+	{"id": "op03", "code": "OP-03", "name": "BROKEN SIGNAL", "playable": false, "environment": "Communications facility",
+	 "briefing": "Disrupt the Dominion communications network.", "unlock_after": "op02"},
+	{"id": "op04", "code": "OP-04", "name": "COLD FRONTIER", "playable": false, "environment": "Snow research station",
+	 "briefing": "Investigate a silent research station.", "unlock_after": "op03"},
+	{"id": "op05", "code": "OP-05", "name": "DEAD ZONE", "playable": false, "environment": "Restricted research facility",
+	 "briefing": "Recover evidence of an undisclosed Dominion operation.", "unlock_after": "op04"},
+	{"id": "op06", "code": "OP-06", "name": "IRON VEIL", "playable": false, "environment": "Military compound",
+	 "briefing": "Strike a strategic Dominion command location.", "unlock_after": "op05"},
+	{"id": "op07", "code": "OP-07", "name": "BLACKOUT", "playable": false, "environment": "Dominion headquarters",
+	 "briefing": "End The Dominion's operational network.", "unlock_after": "op06"}
+]

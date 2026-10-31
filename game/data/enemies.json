@@ -1,0 +1,18 @@
+[
+	{"id": "infantry", "name": "Dominion Rifleman", "health": 100, "armor": 0, "armor_absorb": 0.0,
+	 "speed_walk": 1.8, "speed_run": 4.2, "sight_range": 38, "fov_deg": 110, "hearing_range": 45,
+	 "reaction_time": 0.65, "accuracy": 0.32, "damage": 9, "rpm": 420, "burst": [3, 6], "mag": 30, "reload_time": 2.6,
+	 "engage_range": 35, "color": [0.45, 0.22, 0.18], "scale": 1.0, "xp": 20, "behaviour": "standard"},
+	{"id": "heavy", "name": "Dominion Heavy", "health": 220, "armor": 120, "armor_absorb": 0.5,
+	 "speed_walk": 1.4, "speed_run": 2.8, "sight_range": 32, "fov_deg": 100, "hearing_range": 40,
+	 "reaction_time": 0.9, "accuracy": 0.28, "damage": 11, "rpm": 600, "burst": [6, 12], "mag": 60, "reload_time": 3.6,
+	 "engage_range": 28, "color": [0.25, 0.25, 0.28], "scale": 1.12, "xp": 45, "behaviour": "advance"},
+	{"id": "recon", "name": "Dominion Spotter", "health": 80, "armor": 0, "armor_absorb": 0.0,
+	 "speed_walk": 2.0, "speed_run": 4.8, "sight_range": 60, "fov_deg": 130, "hearing_range": 60,
+	 "reaction_time": 0.5, "accuracy": 0.42, "damage": 14, "rpm": 180, "burst": [1, 2], "mag": 10, "reload_time": 2.4,
+	 "engage_range": 55, "color": [0.32, 0.38, 0.22], "scale": 0.97, "xp": 30, "behaviour": "alert_others", "alert_radius": 30},
+	{"id": "command", "name": "Dominion Officer", "health": 140, "armor": 40, "armor_absorb": 0.4,
+	 "speed_walk": 1.6, "speed_run": 3.8, "sight_range": 40, "fov_deg": 110, "hearing_range": 50,
+	 "reaction_time": 0.6, "accuracy": 0.3, "damage": 10, "rpm": 400, "burst": [2, 4], "mag": 15, "reload_time": 2.2,
+	 "engage_range": 30, "color": [0.55, 0.15, 0.12], "scale": 1.03, "xp": 60, "behaviour": "coordinate", "alert_radius": 40}
+]
