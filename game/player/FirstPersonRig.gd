@@ -3,9 +3,12 @@ extends Node3D
 ## ADS transition, reload/switch animation, sprint pose and damage shake. No gameplay authority.
 
 const VM_SCALE := 0.3
-const VM_FOV_SQUEEZE := 0.62          # view model is scaled toward the camera so it never clips into walls
-const HIP_POS := Vector3(0.25, -0.26, -0.36)   # grip within real arm reach of the shoulders
-const SPRINT_POS := Vector3(0.1, -0.3, -0.3)
+const VM_FOV_SQUEEZE := 0.84          # view model is scaled toward the camera so it never clips into walls
+# CS2 / Valorant-style framing: weapon close, low in the bottom-right, canted slightly toward the crosshair.
+const HIP_POS := Vector3(0.3, -0.27, -0.26)
+const HIP_ROT := Vector3(0.02, 0.07, 0.0)
+const PISTOL_POS := Vector3(0.14, -0.2, -0.34)   # pistols sit nearer the centre, both hands in view
+const SPRINT_POS := Vector3(0.2, -0.33, -0.22)
 const SPRINT_ROT := Vector3(-0.35, 0.8, 0.25)
 
 var player: Player
@@ -157,9 +160,10 @@ func _process(dt: float) -> void:
 	# view model placement
 	if _vm:
 		var sight_y: float = _vm.get_node("Sight").position.y
-		var ads_pos := Vector3(0, -sight_y, -0.26 if def.get("model", "") != "pistol" else -0.36)
-		var pos := HIP_POS.lerp(ads_pos, _ads)
-		var rot := Vector3.ZERO
+		var ads_pos := Vector3(0, -sight_y, -0.2 if def.get("model", "") != "pistol" else -0.3)
+		var hip: Vector3 = PISTOL_POS if def.get("model", "") == "pistol" else HIP_POS
+		var pos := hip.lerp(ads_pos, _ads)
+		var rot := HIP_ROT * (1.0 - _ads)
 		var sprint_blend := 1.0 if m["sprinting"] else 0.0
 		pos = pos.lerp(SPRINT_POS, sprint_blend * 0.9)
 		rot = rot.lerp(SPRINT_ROT, sprint_blend * 0.9)
