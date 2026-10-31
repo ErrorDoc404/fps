@@ -36,6 +36,7 @@ headless dedicated server from the same executable and connects to it.
 Multiple clients on one PC: `OperationBlackout.exe -- --profile=Second`.
 
 ### Pterodactyl panel
+Import `deploy/pterodactyl/egg-operation-blackout.json` (Admin → Nests → Import Egg). Or set it up by hand:
 1. Server with 2 allocations (game UDP + website TCP), image `ghcr.io/parkervcp/yolks:debian`.
 2. Upload and unarchive the zip that matches the node CPU (ARM64 for Ampere).
 3. Startup: `bash OperationBlackout-Server/run_server.sh --port={{SERVER_PORT}} --http-port=<2nd port> --data-dir=./server_data`

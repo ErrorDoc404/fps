@@ -1,0 +1,72 @@
+{
+    "_comment": "Operation: Blackout dedicated server egg. Import via Admin > Nests > Import Egg.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-10-31T00:00:00+00:00",
+    "name": "Operation: Blackout",
+    "author": "akashsinhakvs@gmail.com",
+    "description": "Co-op tactical FPS dedicated server (Godot 4.3, headless). Needs 2 ports: the primary allocation is the game port (UDP), and HTTP_PORT is the download website (TCP) that serves the Windows client. Supports x86_64 and ARM64 (Ampere) nodes.",
+    "features": null,
+    "docker_images": {
+        "Debian": "ghcr.io/parkervcp/yolks:debian"
+    },
+    "file_denylist": [],
+    "startup": "bash OperationBlackout-Server/run_server.sh --port={{SERVER_PORT}} --http-port={{HTTP_PORT}} --data-dir=./server_data",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"dedicated server started\"}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Operation: Blackout - Pterodactyl install script (runs on the node; picks x86_64 or ARM64 automatically)\napt-get update -qq && apt-get install -y -qq curl unzip ca-certificates > /dev/null\ncd /mnt/server\nARCH=$(uname -m)\ncase \"$ARCH\" in\n  aarch64|arm64) ZIP=OperationBlackout-Server-Linux-ARM64.zip ;;\n  *)             ZIP=OperationBlackout-Server-Linux.zip ;;\nesac\nURL=\"${DOWNLOAD_URL}\"\nif [ -z \"$URL\" ]; then\n  URL=\"https://github.com/${GITHUB_REPO}/raw/${GITHUB_BRANCH}/dist/${ZIP}\"\nfi\necho \"Node architecture: $ARCH - downloading $URL\"\nif curl -fL --retry 3 -o server.zip \"$URL\"; then\n  rm -rf OperationBlackout-Server\n  unzip -o -q server.zip && rm -f server.zip\n  chmod +x OperationBlackout-Server/run_server.sh OperationBlackout-Server/blackout_server.* 2>/dev/null\n  echo \"Installed OperationBlackout-Server ($ZIP)\"\nelse\n  echo \"Download failed (private repository?). Upload $ZIP in the File Manager and click Unarchive.\"\nfi\nmkdir -p server_data\nexit 0\n",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Website port",
+            "description": "TCP port for the download website. Must be an extra allocation assigned to this server.",
+            "env_variable": "HTTP_PORT",
+            "default_value": "8080",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "GitHub repository",
+            "description": "owner/repo that contains dist/*.zip",
+            "env_variable": "GITHUB_REPO",
+            "default_value": "ErrorDoc404/fps",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "GitHub branch",
+            "description": "Branch to download the build from",
+            "env_variable": "GITHUB_BRANCH",
+            "default_value": "claude/blissful-mayer-pwam2e",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Download URL override",
+            "description": "Optional direct URL to a server zip (overrides repository/branch).",
+            "env_variable": "DOWNLOAD_URL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:500",
+            "field_type": "text"
+        }
+    ]
+}
