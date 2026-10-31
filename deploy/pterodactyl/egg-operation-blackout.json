@@ -7,7 +7,7 @@
     "exported_at": "2026-10-31T00:00:00+00:00",
     "name": "Operation: Blackout",
     "author": "akashsinhakvs@gmail.com",
-    "description": "Co-op tactical FPS dedicated server (Godot 4.3, headless). Needs 2 ports: the primary allocation is the game port (UDP), and HTTP_PORT is the download website (TCP) that serves the Windows client. Supports x86_64 and ARM64 (Ampere) nodes.",
+    "description": "Co-op tactical FPS dedicated server (Godot 4.3, headless). Needs 1 allocation: the game uses it over UDP and the download website (which serves the Windows client) over TCP by default. Supports x86_64 and ARM64 (Ampere) nodes.",
     "features": null,
     "docker_images": {
         "Debian": "ghcr.io/parkervcp/yolks:debian"
@@ -30,12 +30,12 @@
     "variables": [
         {
             "name": "Website port",
-            "description": "TCP port for the download website. Must be an extra allocation assigned to this server.",
+            "description": "TCP port for the download website. \"same\" = use the game port number (the game uses UDP, the site TCP, so one allocation is enough). Never use 8080 (Wings).",
             "env_variable": "HTTP_PORT",
-            "default_value": "8080",
+            "default_value": "same",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:1,65535",
+            "rules": "required|string|max:5",
             "field_type": "text"
         },
         {

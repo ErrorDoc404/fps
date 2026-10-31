@@ -37,9 +37,9 @@ Multiple clients on one PC: `OperationBlackout.exe -- --profile=Second`.
 
 ### Pterodactyl panel
 Import `deploy/pterodactyl/egg-operation-blackout.json` (Admin → Nests → Import Egg). Or set it up by hand:
-1. Server with 2 allocations (game UDP + website TCP), image `ghcr.io/parkervcp/yolks:debian`.
+1. Server with 1 allocation (game UDP + website TCP on the same number), image `ghcr.io/parkervcp/yolks:debian`.
 2. Upload and unarchive the zip that matches the node CPU (ARM64 for Ampere).
-3. Startup: `bash OperationBlackout-Server/run_server.sh --port={{SERVER_PORT}} --http-port=<2nd port> --data-dir=./server_data`
+3. Startup: `bash OperationBlackout-Server/run_server.sh --port={{SERVER_PORT}} --http-port=same --data-dir=./server_data` (`same` = website on TCP with the game port number; never 8080, which Wings uses)
 4. Done text: `dedicated server started`; stop command: `^C`.
 
 ## Run from source

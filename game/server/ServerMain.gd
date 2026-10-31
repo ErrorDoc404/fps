@@ -1,7 +1,7 @@
 extends Node
 ## Dedicated server process. Headless, Linux x86_64 target.
 ## Args: --port=7777 --data-dir=<path> --log-file=<path> --exit-when-empty --allow-test-commands --max-idle=<sec>
-##       --http-port=8080 (download website) --downloads-dir=<path> (default: <executable dir>/downloads) --no-web
+##       --http-port=8080|same (download website; "same" = TCP on the game port number) --downloads-dir=<path> (default: <executable dir>/downloads) --no-web
 
 var _empty_since := -1.0
 var _had_players := false
@@ -25,7 +25,8 @@ func _ready() -> void:
 		web.name = "WebPortal"
 		add_child(web)
 		var dl := Args.get_value("downloads-dir", OS.get_executable_path().get_base_dir().path_join("downloads"))
-		web.start(Args.get_int("http-port", 8080), port, dl)
+		var hp := Args.get_value("http-port", "8080")
+		web.start(port if hp in ["same", "0", ""] else int(hp), port, dl)  # game is UDP, so TCP can reuse the number
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
