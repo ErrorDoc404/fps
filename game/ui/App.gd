@@ -10,6 +10,7 @@ var _connecting_solo := false
 var _solo_attempts := 0
 var _solo_port := 0
 var _toast: Label
+var _holder: Node
 
 func _ready() -> void:
 	ui = CanvasLayer.new()
@@ -19,7 +20,13 @@ func _ready() -> void:
 	_toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	_toast.position.y -= 80
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	Session.welcomed.connect(func(_p): show_lobby())
+	Session.welcomed.connect(_on_welcomed)
+	Session.room_joined.connect(func(_s): show_lobby())
+	Session.room_left.connect(func(r):
+		_teardown_mission()
+		show_rooms()
+		toast(r))
+	Session.notice.connect(func(t): toast(t))
 	Session.kicked.connect(func(r): toast("Disconnected: " + r))
 	Session.mission_loading.connect(_on_mission_loading)
 	Session.results_received.connect(_on_results)
@@ -58,9 +65,21 @@ func show_menu() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	set_screen(preload("res://ui/MainMenu.gd").new(self))
 
+func _on_welcomed(_p: Dictionary) -> void:
+	if _connecting_solo:
+		_connecting_solo = false
+		Session.request_create_room("%s's squad" % Settings.get_v("player_name"), "", 4, "op01")
+	elif Args.has("autotest"):
+		pass  # the test bot drives room selection
+	else:
+		show_rooms()
+
+func show_rooms() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	set_screen(preload("res://ui/RoomBrowser.gd").new(self))
+
 func show_lobby() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_connecting_solo = false
 	set_screen(preload("res://ui/LobbyScreen.gd").new(self))
 
 # ---------------------------------------------------------------- connection
@@ -84,7 +103,12 @@ func join(address: String) -> void:
 	var parts := address.split(":")
 	var host := parts[0] if parts[0] != "" else "127.0.0.1"
 	var port := int(parts[1]) if parts.size() > 1 else Net.DEFAULT_PORT
-	Settings.set_v("last_server", "%s:%d" % [host, port])
+	var key := "%s:%d" % [host, port]
+	Settings.set_v("last_server", key)
+	var hist: Array = Settings.get_v("history").duplicate()
+	hist.erase(key)
+	hist.push_front(key)
+	Settings.set_v("history", hist.slice(0, 20))
 	toast("Connecting to %s:%d ..." % [host, port])
 	if Session.connect_to(host, port) != OK:
 		toast("Connection failed.")
@@ -108,14 +132,24 @@ func _back_to_menu(msg: String) -> void:
 		toast(msg)
 
 # ---------------------------------------------------------------- mission
-func _on_mission_loading(mission_id: String, sid: String) -> void:
+func _on_mission_loading(mission_id: String, sid: String, rid: int) -> void:
 	_teardown_mission()
 	if screen:
 		screen.queue_free()
 		screen = null
+	# Same node path as the room's World on the server so RPCs route: /root/Rooms/R<id>/World
+	var rooms := get_node_or_null("/root/Rooms")
+	if rooms == null:
+		rooms = Node.new()
+		rooms.name = "Rooms"
+		get_tree().root.add_child(rooms)
+	_holder = Node.new()
+	_holder.name = "R%d" % rid
+	rooms.add_child(_holder)
 	world = preload("res://world/World.gd").new()
 	world.name = "World"
-	get_tree().root.add_child(world)
+	_holder.add_child(world)
+	Sfx.world_host = world
 	world.setup_client(mission_id, sid)
 	hud = preload("res://ui/Hud.gd").new(world)
 	hud.theme = UiKit.theme()
@@ -129,9 +163,17 @@ func _on_mission_loading(mission_id: String, sid: String) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _teardown_mission() -> void:
-	if world:
-		world.queue_free()
-		world = null
+	# UI first: it reads the world (camera, players) every frame.
+	for n in [hud, pause_menu]:
+		if is_instance_valid(n):
+			n.process_mode = Node.PROCESS_MODE_DISABLED
+			n.visible = false
+	Sfx.world_host = null
+	if is_instance_valid(_holder):
+		_holder.get_parent().remove_child(_holder)  # free the path immediately so a new mission can reuse it
+		_holder.queue_free()
+	_holder = null
+	world = null
 	for n in [hud, pause_menu]:
 		if is_instance_valid(n):
 			n.queue_free()

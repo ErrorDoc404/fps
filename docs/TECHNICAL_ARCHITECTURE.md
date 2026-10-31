@@ -76,8 +76,20 @@ per `session_id` per profile), loadout ownership (unlock level / class category)
 Client input values are sanitised (finite, clamped pitch, normalised move). Chat/lobby/actions are rate-limited.
 Test commands (`c_test`) are ignored unless the server is started with `--allow-test-commands`.
 
+## Rooms (multi-squad dedicated server)
+One server process hosts many **rooms** (`server/Room.gd`); each room is a squad of 1–4 operators with its own lobby, leader,
+optional password (stored as a salted SHA-256), selected operation and mission. Limits: `--max-rooms`, `--max-players` (ENet peers).
+- **Browser**: `c_list_rooms(filters)` → `s_room_list(rooms, server_info)`. Filters (CS:GO-style): text search (room or leader),
+  operation, not full, has players, no password, not in mission. Sorted by players then name. Joining a full room or using a wrong password
+  is rejected with `s_notice`. Empty rooms are closed automatically.
+- **Isolation**: on the server each room's World lives in `/root/Rooms/R<id>` = a `SubViewport` with `own_world_3d`, so every mission has
+  its own physics space and navigation map. Clients put their World at the same path (`/root/Rooms/R<id>/World`, plain Node holder),
+  so RPCs route to the correct room. Every World RPC checks that the sender is a member of *that* room.
+- **Server browser (client)**: Favorites and History tabs; each entry is queried over HTTP `/status.json` (name, rooms, players,
+  version/protocol) and the round-trip time is shown as ping.
+
 ## Session lifecycle (implemented)
-1. Client authenticates (realm + secret) → 2. joins the squad lobby on the dedicated server → 3. leader selects operation →
+1. Client authenticates (realm + secret) → 2. browses rooms and joins or creates one → 3. room leader selects operation →
 4. all ready → leader deploys → 5. server builds World, bakes navmesh, spawns players/AI → 6. clients build the same map and
 report `c_world_ready` → 7. server streams state → 8. objectives → extraction → 9. MissionDirector computes results →
 10. ProfileStore persists XP/credits/history → 11. `s_results` → 12. server returns to lobby (same process, next operation) →

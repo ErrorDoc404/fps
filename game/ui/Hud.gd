@@ -408,7 +408,12 @@ func flash(intensity: float) -> void:
 	_flash.color.a = intensity
 
 # ------------------------------------------------------------------ per-frame
+func _world_alive() -> bool:
+	return is_instance_valid(world) and world.is_inside_tree() and is_instance_valid(world.local_player)
+
 func _process(dt: float) -> void:
+	if not _world_alive():
+		return
 	var lp: Player = world.local_player
 	_hit_t -= dt
 	_hitmark.modulate.a = clampf(_hit_t / 0.25, 0.0, 1.0)
@@ -492,6 +497,8 @@ func _update_squad() -> void:
 		r["row"].modulate.a = 0.5 if flags & Player.F_DISCONNECTED else 1.0
 
 func _draw_markers() -> void:
+	if not _world_alive():
+		return
 	var lp: Player = world.local_player
 	if lp == null or not lp.has_node("Rig"):
 		return

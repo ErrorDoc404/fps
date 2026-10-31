@@ -22,6 +22,7 @@ func _ready() -> void:
 	v.add_child(UiKit.label("PAUSED", 40, UiKit.ACCENT, true))
 	v.add_child(UiKit.label("The operation continues for your squad.", 14, UiKit.DIM))
 	v.add_child(UiKit.button("RESUME", func(): app.toggle_pause(), 280))
-	v.add_child(UiKit.button("LEAVE OPERATION", func(): app.leave_session(), 280))
+	v.add_child(UiKit.button("LEAVE OPERATION", func(): Session.request_leave_room(), 280))
+	v.add_child(UiKit.button("DISCONNECT", func(): app.leave_session(), 280))
 	v.add_child(UiKit.button("QUIT GAME", func(): get_tree().quit(), 280))
 	h.add_child(preload("res://ui/SettingsPanel.gd").new())

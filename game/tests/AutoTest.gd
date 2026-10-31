@@ -11,13 +11,18 @@ var _world: Node
 var _done := false
 var _kills := 0
 var _hits := 0
+var _last_list: Array = []
+var _list_seq := 0
+var _notices: Array = []
 
 func _ready() -> void:
 	role = Args.get_value("role", "member")
 	var addr := Args.get_value("connect", "127.0.0.1:7777").split(":")
 	Session.welcomed.connect(_on_welcomed)
 	Session.chat_received.connect(_on_chat)
-	Session.mission_loading.connect(func(_m, _s): _on_mission.call_deferred())
+	Session.mission_loading.connect(func(_m, _s, _r): _on_mission.call_deferred())
+	Session.room_list_received.connect(func(l, _i): _last_list = l; _list_seq += 1)
+	Session.notice.connect(func(t): _notices.append(t))
 	Session.results_received.connect(_on_results)
 	Session.kicked.connect(func(r): _fail_all("kicked: " + r))
 	get_tree().create_timer(float(Args.get_value("timeout", "240"))).timeout.connect(func(): _fail_all("timeout"))
@@ -45,8 +50,56 @@ func _finish() -> void:
 	await get_tree().create_timer(0.5).timeout
 	get_tree().quit(0 if checks.all(func(c): return c["ok"]) else 1)
 
+func _list_rooms(filters: Dictionary) -> Array:
+	var seq := _list_seq
+	Session.request_rooms(filters)
+	await _wait_until(func(): return _list_seq > seq, 3.0)
+	return _last_list
+
+func _find_room(room_name: String, secs: float) -> Dictionary:
+	var t := 0.0
+	while t < secs:
+		for r in await _list_rooms({"search": room_name}):
+			if r["name"] == room_name:
+				return r
+		await get_tree().create_timer(0.5).timeout
+		t += 0.6
+	return {}
+
 func _on_welcomed(profile: Dictionary) -> void:
 	check("authenticated", profile.has("level"), "level %s" % profile.get("level"))
+	var room_name := Args.get_value("room", "Alpha")
+	if role == "viewer":   # screenshots of the browsers (rendered runs)
+		app.show_rooms()
+		await get_tree().create_timer(3.0).timeout
+		await shot("09_room_browser")
+		Settings.set_v("favorites", [Args.get_value("connect", "")])
+		app.show_menu()
+		app.screen._show(preload("res://ui/ServerBrowser.gd").new(app))
+		await get_tree().create_timer(3.0).timeout
+		await shot("10_server_browser")
+		_finish()
+		return
+	if role == "prober":
+		await _probe(room_name)
+		return
+	var wrong := Args.get_value("probe-password-room", "")
+	if wrong != "":
+		var pr := await _find_room(wrong, 30.0)
+		check("password_room_found", not pr.is_empty() and pr["locked"], wrong)
+		_notices.clear()
+		Session.request_join_room(pr.get("id", 0), "not-the-password")
+		check("wrong_password_rejected", await _wait_until(func(): return _notices.any(func(n): return n.contains("Wrong password")), 3.0) and Session.room_id == 0)
+	if role == "leader":
+		Session.request_create_room(room_name, "", 4, "op01")
+	else:
+		var r := await _find_room(room_name, 30.0)
+		check("room_listed", not r.is_empty(), room_name)
+		if r.is_empty():
+			_finish()
+			return
+		Session.request_join_room(r["id"], "")
+	check("joined_room", await _wait_until(func(): return Session.room_id != 0, 10.0), room_name)
 	await get_tree().create_timer(0.3).timeout
 	Session.request_class(Args.get_value("class", "assault"))
 	await get_tree().create_timer(0.3).timeout
@@ -65,6 +118,7 @@ func _leader_lobby() -> void:
 		await get_tree().create_timer(0.25).timeout
 		t += 0.25
 	check("lobby_full_and_ready", Session.lobby.get("members", {}).size() >= expect, "%d members" % Session.lobby.get("members", {}).size())
+	await get_tree().create_timer(float(Args.get_value("deploy-delay", "0"))).timeout
 	check("is_leader", Session.is_leader())
 	await shot("01_lobby")
 	Session.request_deploy()
@@ -83,11 +137,11 @@ func _on_chat(from: String, text: String) -> void:
 				_world.rpc_id(1, "c_test", "teleport", _world.map_info["extraction"] + off)
 
 func _on_mission() -> void:
-	_world = get_node_or_null("/root/World")
+	_world = app.world
 	var t := 0.0
 	while (_world == null or _world.local_player == null) and t < 15.0:
 		await get_tree().create_timer(0.2).timeout
-		_world = get_node_or_null("/root/World")
+		_world = app.world
 		t += 0.2
 	check("local_player_spawned", _world != null and _world.local_player != null)
 	if _world == null or _world.local_player == null:
@@ -158,10 +212,13 @@ func _leader_mission() -> void:
 	var lp: Player = w.local_player
 	var expect := Args.get_int("expect", 1)
 	check("all_players_synced", await _wait_until(func(): return w.players.size() >= expect, 8.0), "%d players" % w.players.size())
-	check("enemies_synced", w.enemies.size() >= 10, "%d enemies" % w.enemies.size())
+	check("room_world_isolated_enemies", w.enemies.size() == 10, "%d enemies (10 per mission instance)" % w.enemies.size())
 	check("objectives_synced", not w.objective_state.is_empty())
 	await _wait_until(func(): return not lp.inv_mirror.is_empty(), 5.0)
 	check("inventory_received", not lp.inv_mirror.is_empty())
+	if Args.has("down-self"):
+		w.rpc_id(1, "c_test", "damage_self", 1000.0)
+		return
 	if Args.has("fail-fast"):
 		w.rpc_id(1, "c_test", "fail_mission", 0)
 		return
@@ -209,13 +266,16 @@ func _leader_mission() -> void:
 	var mag0: int = lp.inv_mirror["weapons"][0]["mag"]
 	await _teleport(target.global_position + Vector3(0, 0.2, 7))
 	var killed := false
-	for i in range(80):
+	for i in range(200):
 		if target.is_dead():
 			killed = true
 			break
 		_look_at(target.global_position + Vector3.UP * 1.25)
 		Input.action_press("aim")
-		Input.action_press("fire")
+		if i % 3 == 0:
+			Input.action_release("fire")  # re-pull the trigger so semi-automatic weapons keep firing
+		else:
+			Input.action_press("fire")
 		await get_tree().create_timer(0.1).timeout
 		if i == 6:
 			await shot("03_combat_ads")
@@ -294,4 +354,44 @@ func _on_results(results: Dictionary) -> void:
 	await shot("07_results")
 	await get_tree().create_timer(1.5).timeout
 	check("returned_to_lobby", Session.lobby.get("phase", "") == "lobby")
+	_finish()
+
+## Room-browser checks run by a separate client while room `target` fills up and deploys.
+func _probe(target: String) -> void:
+	var r := {}
+	var t := 0.0
+	while t < 60.0:
+		r = await _find_room(target, 1.0)
+		if not r.is_empty() and r["players"] >= r["max"]:
+			break
+		await get_tree().create_timer(0.5).timeout
+		t += 1.0
+	check("full_room_listed", not r.is_empty() and r["players"] == 4, "%s/%s" % [r.get("players"), r.get("max")])
+	var nf := await _list_rooms({"search": target, "not_full": true})
+	check("filter_not_full_hides_full_room", nf.all(func(x): return x["name"] != target))
+	_notices.clear()
+	Session.request_join_room(r.get("id", 0), "")
+	var rejected: bool = await _wait_until(func(): return _notices.any(func(n): return n.contains("full")), 3.0)
+	check("full_room_join_rejected", rejected and Session.room_id == 0, str(_notices))
+	Session.request_create_room("Bravo", "secret", 2, "op01")
+	check("created_password_room", await _wait_until(func(): return Session.room_id != 0, 5.0))
+	var b := await _find_room("Bravo", 3.0)
+	check("password_room_listed_locked", b.get("locked", false) and b.get("players", 0) == 1 and b.get("max", 0) == 2)
+	var np := await _list_rooms({"search": "Bravo", "no_password": true})
+	check("filter_no_password", np.is_empty())
+	var hp := await _list_rooms({"search": "Bravo", "has_players": true})
+	check("filter_has_players", hp.size() == 1)
+	for i in range(40):
+		var cur := await _list_rooms({"search": target})
+		if cur.any(func(x): return x["name"] == target and x["phase"] != "lobby"):
+			break
+		await get_tree().create_timer(0.5).timeout
+	var nip := await _list_rooms({"search": target, "not_in_progress": true})
+	check("filter_not_in_progress_hides_mission", nip.is_empty())
+	await get_tree().create_timer(12.0).timeout   # keep Bravo open so another client can try a wrong password
+	Session.request_leave_room()
+	await _wait_until(func(): return Session.room_id == 0, 3.0)
+	await get_tree().create_timer(0.5).timeout
+	var gone := await _list_rooms({"search": "Bravo"})
+	check("empty_room_closed", gone.is_empty())
 	_finish()

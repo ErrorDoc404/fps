@@ -9,10 +9,10 @@ signal peer_joined(id: int)
 signal peer_left(id: int)
 
 const DEFAULT_PORT := 7777
-const MAX_CLIENTS := 4
-const PROTOCOL_VERSION := "blackout-0.1"
+const PROTOCOL_VERSION := "blackout-0.2"
 
 var role := "none"   # "server" | "client" | "none"
+var max_clients := 64
 var server_process_pid := -1
 
 func _ready() -> void:
@@ -22,9 +22,10 @@ func _ready() -> void:
 	multiplayer.connection_failed.connect(_on_connect_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
 
-func host(port: int) -> Error:
+func host(port: int, capacity := 64) -> Error:
+	max_clients = capacity
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(port, MAX_CLIENTS + 2)  # +2 slack so full-squad rejections can be reported cleanly
+	var err := peer.create_server(port, capacity)
 	if err != OK:
 		Log.error("net", "failed to bind server", {"port": port, "err": err})
 		return err
@@ -65,7 +66,7 @@ func spawn_local_server(port: int) -> bool:
 	var args := PackedStringArray()
 	if OS.has_feature("editor") or not OS.has_feature("template"):
 		args.append_array(["--path", ProjectSettings.globalize_path("res://")])
-	args.append_array(["--headless", "--", "--server", "--port=%d" % port, "--exit-when-empty"])
+	args.append_array(["--headless", "--", "--server", "--port=%d" % port, "--exit-when-empty", "--no-web", "--max-rooms=1"])
 	server_process_pid = OS.create_process(OS.get_executable_path(), args)
 	Log.info("net", "spawned local dedicated server", {"pid": server_process_pid, "port": port})
 	return server_process_pid > 0

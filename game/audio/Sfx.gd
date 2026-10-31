@@ -4,6 +4,7 @@ extends Node
 
 const RATE := 22050
 var _clips := {}
+var world_host: Node   # client mission World; 3D sounds are parented there
 
 func _ready() -> void:
 	if DisplayServer.get_name() == "headless":
@@ -107,17 +108,13 @@ func play_2d(name: String, db := 0.0) -> void:
 func play_3d(name: String, pos: Vector3, db := 0.0) -> void:
 	if not _clips.has(name):
 		return
-	var tree := get_tree()
-	if tree.current_scene == null and not has_node("/root/World"):
-		return
 	var p := AudioStreamPlayer3D.new()
 	p.stream = _clips[name]
 	p.volume_db = db
 	p.unit_size = 8.0
 	p.max_distance = 180.0
 	p.pitch_scale = randf_range(0.93, 1.07)
-	var host: Node = get_node_or_null("/root/World")
-	(host if host else self).add_child(p)
+	(world_host if is_instance_valid(world_host) else self).add_child(p)
 	p.global_position = pos
 	p.play()
 	p.finished.connect(p.queue_free)

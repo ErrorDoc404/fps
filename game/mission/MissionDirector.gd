@@ -255,7 +255,7 @@ func _finish(result: String) -> void:
 		"code": mission.get("code", ""), "objectives": objs, "squad": squad, "duration": world.mission_time - _started_at,
 		"session": world.session_id}
 	world.broadcast_objectives()
-	world.get_tree().create_timer(3.0).timeout.connect(func(): Session.finish_mission(summary, per_slot))
+	world.get_tree().create_timer(3.0).timeout.connect(func(): Session.finish_mission(world.room, summary, per_slot))
 
 func state_dict() -> Dictionary:
 	var objs := {}

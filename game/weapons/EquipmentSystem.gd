@@ -109,7 +109,7 @@ func _detonate(t: Dictionary) -> void:
 			if d < r and world.has_los(pos + Vector3.UP * 0.3, p.eye_position()):
 				var facing: float = p.aim_direction().dot((pos - p.eye_position()).normalized())
 				var intensity := clampf((1.0 - d / r) * (0.4 + 0.6 * maxf(facing, 0.0)), 0.0, 1.0)
-				var peer := Session.peer_for_slot(p.slot)
+				var peer: int = world.room.peer_for_slot(p.slot)
 				if peer != 0:
 					world.rpc_id(peer, "s_flashed", intensity)
 		for e in world.enemies.values():

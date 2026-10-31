@@ -13,6 +13,9 @@ var values := {
 	"player_name": "",
 	"profile_id": "",
 	"last_server": "127.0.0.1:7777",
+	"favorites": [],          # server browser: saved "host:port" entries
+	"history": [],            # server browser: recently joined servers (most recent first)
+	"room_filters": {"search": "", "mission": "", "not_full": true, "has_players": false, "no_password": false, "not_in_progress": false},
 }
 
 ## `--profile=<name>` selects a separate local profile (settings + identity), e.g. for several clients on one PC.

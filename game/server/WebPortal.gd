@@ -167,10 +167,14 @@ func _respond(c: Dictionary, code: int, ctype: String, body: PackedByteArray, he
 	c["out"] = out
 
 func _status() -> Dictionary:
-	var mission := GameData.mission(Session.selected_mission)
-	return {"name": "Operation: Blackout", "version": ProjectSettings.get_setting("application/config/version"),
-		"game_port": game_port, "players": Session.members.size(), "max_players": Session.MAX_SQUAD,
-		"phase": Session.phase, "operation": "%s %s" % [mission.get("code", ""), mission.get("name", "")]}
+	var info := Session.server_info()
+	info["game_port"] = game_port
+	info["protocol"] = Net.PROTOCOL_VERSION
+	var list := []
+	for r in Session.rooms.values():
+		list.append(r.summary())
+	info["room_list"] = list
+	return info
 
 static func _human(bytes: int) -> String:
 	return "%.1f MB" % (bytes / 1048576.0) if bytes >= 1048576 else "%d KB" % (bytes / 1024)
@@ -208,17 +212,29 @@ h2{margin:0 0 12px;font-size:15px;letter-spacing:3px;color:var(--accent);text-tr
 .dl:hover{background:#283026}.dl span{color:var(--accent);font-weight:700}.dl i{color:var(--dim);font-style:normal}
 .stat{display:flex;gap:28px;flex-wrap:wrap}.stat div b{display:block;font-size:22px}.stat div span{color:var(--dim);font-size:13px;text-transform:uppercase;letter-spacing:2px}
 code{background:#000;padding:2px 8px;color:var(--ok)}ol{margin:0;padding-left:20px}.dim{color:var(--dim)}
+.rooms{width:100%%;border-collapse:collapse}.rooms th{color:var(--dim);font-size:12px;letter-spacing:2px;text-align:left;padding:6px}.rooms td{padding:8px 6px;border-top:1px solid var(--line)}
 @media(max-width:600px){.dl{grid-template-columns:1fr}h1{font-size:38px}}
 </style></head><body><div class="stripe"></div><div class="wrap">
 <h1><small>OPERATION:</small>BLACKOUT</h1><div class="tag">Four operators. One mission. No one left behind.</div>
 <div class="panel"><h2>Server status</h2><div class="stat">
-<div><b>%s</b><span>Address</span></div><div><b>%d / %d</b><span>Operators</span></div>
-<div><b>%s</b><span>Phase</span></div><div><b>%s</b><span>Operation</span></div><div><b>v%s</b><span>Version</span></div></div></div>
+<div><b>%s</b><span>Address</span></div><div><b>%d / %d</b><span>Players online</span></div>
+<div><b>%d / %d</b><span>Rooms</span></div><div><b>v%s</b><span>Version</span></div></div></div>
+<div class="panel"><h2>Rooms</h2>%s</div>
 <div class="panel"><h2>Downloads</h2>%s</div>
 <div class="panel"><h2>How to join</h2><ol>
 <li>Download the Windows client and extract the zip (keep the .exe and .pck together).</li>
-<li>Run <b>OperationBlackout.exe</b> and choose <b>JOIN SERVER</b>.</li>
-<li>Enter <code>%s:%d</code> and connect. Up to four operators per squad.</li></ol></div>
+<li>Run <b>OperationBlackout.exe</b>, open <b>SERVER BROWSER</b> and add <code>%s:%d</code>.</li>
+<li>Connect, then join a room or create your own (up to four operators per room, optional password).</li></ol></div>
 <p class="dim">Game traffic: UDP %d &middot; This page: TCP %d</p></div></body></html>""" % [
-		"%s:%d" % [host, game_port], s["players"], s["max_players"], String(s["phase"]).to_upper(), s["operation"], s["version"],
+		"%s:%d" % [host, game_port], s["players"], s["max_players"], s["rooms"], s["max_rooms"], s["version"], _rooms_html(s["room_list"]),
 		rows, host, game_port, game_port, http_port]
+
+func _rooms_html(list: Array) -> String:
+	if list.is_empty():
+		return "<p class='dim'>No rooms yet. Create one from the in-game server browser.</p>"
+	var h := "<table class='rooms'><tr><th></th><th>Room</th><th>Operation</th><th>Players</th><th>Status</th></tr>"
+	for r in list:
+		h += "<tr><td>%s</td><td>%s</td><td>%s</td><td>%d / %d</td><td>%s</td></tr>" % ["&#128274;" if r["locked"] else "",
+			String(r["name"]).xml_escape(), String(r["mission_name"]).xml_escape(), r["players"], r["max"],
+			"IN MISSION" if r["phase"] != "lobby" else "LOBBY"]
+	return h + "</table>"

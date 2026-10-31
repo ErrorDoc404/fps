@@ -102,6 +102,12 @@ static func theme() -> Theme:
 	t.set_color("default_color", "RichTextLabel", TEXT)
 	t.set_font("normal_font", "RichTextLabel", font())
 	t.set_font("bold_font", "RichTextLabel", font(true))
+	for st in ["normal", "pressed", "hover", "hover_pressed", "focus", "disabled"]:
+		t.set_stylebox(st, "CheckBox", StyleBoxEmpty.new())
+	t.set_color("font_color", "CheckBox", TEXT)
+	t.set_color("font_pressed_color", "CheckBox", ACCENT)
+	t.set_color("font_hover_color", "CheckBox", ACCENT)
+	t.set_color("font_hover_pressed_color", "CheckBox", ACCENT)
 	var grab := sbox(SPR_BUTTON, ACCENT, 6, 6)
 	t.set_icon("grabber", "HSlider", tex(SPR_MAP_DOT))
 	t.set_icon("grabber_highlight", "HSlider", tex(SPR_MAP_DOT))

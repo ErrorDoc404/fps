@@ -18,6 +18,8 @@ func _to_map(p: Vector3, center: Vector3, yaw: float, r: float) -> Vector2:
 	return size * 0.5 + d * (r / RANGE)
 
 func _draw() -> void:
+	if not is_instance_valid(world) or not world.is_inside_tree() or not is_instance_valid(world.local_player):
+		return
 	var lp: Player = world.local_player
 	if lp == null:
 		return

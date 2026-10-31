@@ -15,6 +15,8 @@ func _x_for(bearing_deg: float, heading_deg: float) -> float:
 	return size.x * 0.5 + d / FOV_DEG * size.x
 
 func _draw() -> void:
+	if not is_instance_valid(world) or not world.is_inside_tree() or not is_instance_valid(world.local_player):
+		return
 	var lp: Player = world.local_player
 	if lp == null:
 		return

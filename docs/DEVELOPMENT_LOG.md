@@ -30,3 +30,10 @@
   `run_server.sh` now restores the exec bit and cd's to its own folder (panel uploads often drop permissions).
 - Verified under qemu-aarch64: the server boots, the website serves the client, and the 4-bot mission completes (44/45; walk speed
   slowed by emulation). `run_coop_test.sh` accepts `BOT_ARGS` and `SERVER_BOOT`.
+
+## 2026-10-31: Multi-room dedicated server
+- One server now hosts many rooms (squads of up to 4) instead of one 4-player squad: `server/Room.gd`, room-aware `Session`,
+  per-room isolated World (SubViewport + own World3D). Room browser with CS:GO-style filters, create/join with optional password;
+  server browser with Favorites/History and live status and ping. Website lists rooms. Protocol bumped to `blackout-0.2`.
+- Fixed a client crash: after mission end the HUD kept reading the freed world's camera. The UI is now disabled before the world is freed.
+- Test: 6 clients / 3 rooms / 2 concurrent missions → 93/93 on the exported build. ARM64 build boots under emulation and serves status.

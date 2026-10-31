@@ -1,5 +1,6 @@
 extends Node3D
-## Mission world. Exists at /root/World on both the dedicated server and clients so RPC paths match.
+## Mission world for one room. Lives at /root/Rooms/R<id>/World on both the dedicated server and clients so RPC paths match.
+## On the server its parent is a SubViewport with its own World3D (isolated physics + navigation per room).
 ## Server: authoritative simulation (players, AI, combat resolution, interactions, mission director).
 ## Client: presentation (map visuals, puppets, local prediction via LocalController, HUD, effects).
 
@@ -18,6 +19,7 @@ var players := {}      # slot -> Player
 var enemies := {}      # id -> Enemy
 var smokes: Array = [] # [pos, radius, until]
 var is_server := false
+var room: Room          # server only
 var ui_blocking := false
 var mission_time := 0.0
 
@@ -91,8 +93,9 @@ func _environment() -> void:
 	sun.directional_shadow_max_distance = 90.0
 	add_child(sun)
 
-func setup(mid: String, sid: String) -> void:
+func setup(r: Room, mid: String, sid: String) -> void:
 	is_server = true
+	room = r
 	mission_id = mid
 	session_id = sid
 	mission = GameData.mission(mid)
@@ -111,8 +114,8 @@ func setup(mid: String, sid: String) -> void:
 	Log.info("world", "navigation baked", {"polygons": nm.get_polygon_count()})
 	equipment = EquipmentSystem.new(self)
 	director = MissionDirector.new(self, mission)
-	for id in Session.members:
-		_create_player(Session.members[id], mission["spawn_points"][Session.members[id]["slot"]])
+	for id in room.members:
+		_create_player(room.members[id], mission["spawn_points"][room.members[id]["slot"]])
 	spawn_group("initial")
 	director.start()
 	Log.info("world", "mission world ready", {"mission": mid, "players": players.size(), "enemies": enemies.size()})
@@ -141,7 +144,7 @@ func _create_player(member: Dictionary, spawn: Array) -> Player:
 	return p
 
 func _peer_slot(peer: int) -> int:
-	return Session.members[peer]["slot"] if Session.members.has(peer) else -1
+	return room.members[peer]["slot"] if room.members.has(peer) else -1  # only members of this room may act here
 
 func _sender_player() -> Player:
 	var slot := _peer_slot(multiplayer.get_remote_sender_id())
@@ -152,9 +155,9 @@ func c_world_ready() -> void:
 	if not is_server:
 		return
 	var peer := multiplayer.get_remote_sender_id()
-	if not Session.members.has(peer):
+	if not room.members.has(peer):
 		return
-	var m: Dictionary = Session.members[peer]
+	var m: Dictionary = room.members[peer]
 	var p: Player = players.get(m["slot"])
 	if p == null:
 		p = _create_player(m, mission["spawn_points"][m["slot"]])
@@ -178,7 +181,7 @@ func stop_replication() -> void:
 	_ready_peers.clear()
 	set_physics_process(false)
 
-func on_member_disconnected(slot: int) -> void:
+func on_member_disconnected(slot: int, _left_voluntarily := false) -> void:
 	var p: Player = players.get(slot)
 	if p:
 		p.connected = false
@@ -302,7 +305,7 @@ func c_test(cmd: String, arg: Variant) -> void:
 		"fail_mission": director.fail("Test failure")
 
 func send_inventory(p: Player) -> void:
-	var peer := Session.peer_for_slot(p.slot)
+	var peer := room.peer_for_slot(p.slot)
 	if peer != 0 and _ready_peers.has(peer):
 		rpc_id(peer, "s_inventory", p.inventory.to_dict())
 
@@ -310,7 +313,7 @@ func damage_player(p: Player, amount: float, from_pos: Vector3) -> void:
 	if p.get_meta("invulnerable", false):
 		amount = 0.0
 	var applied := p.health.apply_damage(amount)
-	var peer := Session.peer_for_slot(p.slot)
+	var peer := room.peer_for_slot(p.slot)
 	if peer != 0 and _ready_peers.has(peer):
 		rpc_id(peer, "s_damaged", from_pos, amount, applied)
 
@@ -414,7 +417,7 @@ func _physics_process(dt: float) -> void:
 	equipment.tick(dt)
 	director.tick(dt)
 	smokes = smokes.filter(func(s): return s[2] > mission_time)
-	if Session.members.is_empty():
+	if room.members.is_empty():
 		_empty_t += dt
 		if _empty_t > 60.0 and director.phase == "active":
 			director.fail("Squad disconnected")

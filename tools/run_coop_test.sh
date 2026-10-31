@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end co-op test: 1 headless dedicated server + 4 headless clients (real game code, scripted input).
+# End-to-end test: 1 headless dedicated server + 6 headless clients in 3 rooms (real game code, scripted input).
 # Usage: tools/run_coop_test.sh [godot-binary-or-exported-client] [server-binary]
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,16 +18,22 @@ SPATHARG=()
 "$SERVER" --headless "${SPATHARG[@]}" -- --server --port=$PORT --data-dir="$DATA" --allow-test-commands --log-file="$OUT/server.log" > "$OUT/server.stdout" 2>&1 &
 SPID=$!
 sleep ${SERVER_BOOT:-2}
-bot() { # role class name
-  "$GODOT" --headless "${PATHARG[@]}" -- --autotest --connect=127.0.0.1:$PORT --role=$1 --class=$2 --profile=$3 --name=$3 \
-    ${BOT_ARGS:-} --expect=4 --report="$OUT/$3.json" --timeout=200 > "$OUT/$3.log" 2>&1 &
+bot() { # role class name [extra args...]
+  local role=$1 cls=$2 name=$3; shift 3
+  "$GODOT" --headless "${PATHARG[@]}" -- --autotest --connect=127.0.0.1:$PORT --role=$role --class=$cls --profile=$name --name=$name \
+    ${BOT_ARGS:-} "$@" --expect=${EXPECT:-4} --report="$OUT/$name.json" --timeout=240 > "$OUT/$name.log" 2>&1 &
   PIDS+=($!)
 }
 PIDS=()
-bot leader assault Leader; sleep 0.5
-bot casualty medic Casualty1
-bot member support Support1
-bot leaver recon Leaver1
+# Room "Alpha": full squad of 4 (leader deploys 8 s after everyone is ready so the prober can inspect the full room)
+bot leader assault Leader --room=Alpha --deploy-delay=8; sleep 1
+bot casualty medic Casualty1 --room=Alpha
+bot member support Support1 --room=Alpha
+bot leaver recon Leaver1 --room=Alpha
+# 5th client: room browser filters, full-room rejection, password room "Bravo", room cleanup
+sleep 1; bot prober assault Prober1
+# 6th client: wrong password on "Bravo", then runs a second concurrent mission alone in room "Charlie"
+sleep 6; EXPECT=1 bot leader recon Leader2 --room=Charlie --probe-password-room=Bravo
 wait "${PIDS[@]}"
 sleep 1
 kill $SPID 2>/dev/null; wait $SPID 2>/dev/null

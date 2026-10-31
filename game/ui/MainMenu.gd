@@ -3,7 +3,6 @@ extends Control
 
 var app: Node
 var _content: Control
-var _addr: LineEdit
 
 func _init(a: Node) -> void:
 	app = a
@@ -46,7 +45,7 @@ func _ready() -> void:
 	sp.custom_minimum_size.y = 30
 	left.add_child(sp)
 	left.add_child(UiKit.button("DEPLOY (SOLO / LOCAL)", func(): app.play_solo(), 320))
-	left.add_child(UiKit.button("JOIN SERVER", func(): _show(_join_panel()), 320))
+	left.add_child(UiKit.button("SERVER BROWSER", func(): _show(preload("res://ui/ServerBrowser.gd").new(app)), 320))
 	left.add_child(UiKit.button("OPERATIONS", func(): _show(_operations_panel()), 320))
 	left.add_child(UiKit.button("EQUIPMENT", func(): _show(_equipment_panel()), 320))
 	left.add_child(UiKit.button("CHARACTER", func(): _show(_character_panel()), 320))
@@ -63,20 +62,6 @@ func _show(c: Control) -> void:
 	for ch in _content.get_children():
 		ch.queue_free()
 	_content.add_child(c)
-
-func _join_panel() -> Control:
-	var p := UiKit.panel(Vector2(560, 0))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	p.add_child(v)
-	v.add_child(UiKit.header("Join dedicated server"))
-	v.add_child(UiKit.label("Enter the address of an Operation: Blackout dedicated server (host:port).", 16, UiKit.DIM))
-	_addr = LineEdit.new()
-	_addr.text = Settings.get_v("last_server")
-	_addr.custom_minimum_size = Vector2(400, 44)
-	v.add_child(_addr)
-	v.add_child(UiKit.button("CONNECT", func(): app.join(_addr.text.strip_edges())))
-	return p
 
 func _operations_panel() -> Control:
 	var p := UiKit.panel(Vector2(640, 0))

@@ -24,9 +24,10 @@ Packaged downloads (also committed in `dist/`):
 unzip OperationBlackout-Server-Linux.zip && cd OperationBlackout-Server
 ./run_server.sh --port=7777 --http-port=8080 --data-dir=./server_data
 ```
-Players open `http://<server-ip>:8080/`, download the Windows client, then JOIN SERVER `<server-ip>:7777`.
+Players open `http://<server-ip>:7777/`, download the Windows client, then in the game: SERVER BROWSER → add
+`<server-ip>:7777` → JOIN → pick a room in the ROOM BROWSER (or create one, optionally with a password).
 The site shows live server status (`/status.json`) and serves every `.zip/.7z/.gz/.txt` in `./downloads/`.
-Options: `--port`, `--http-port` (default 8080), `--downloads-dir` (default `<exe dir>/downloads`), `--no-web`,
+Options: `--port`, `--name="Server name"`, `--max-rooms` (default 16), `--max-players` (total, default 64), `--http-port` (default `same`), `--downloads-dir` (default `<exe dir>/downloads`), `--no-web`,
 `--data-dir` (profiles + realm id), `--log-file`, `--exit-when-empty`, `--max-idle=<sec>`,
 `--allow-test-commands` (never in production), `--verbose`. Open **UDP 7777** and **TCP 8080**.
 

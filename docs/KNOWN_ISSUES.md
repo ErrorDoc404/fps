@@ -24,6 +24,11 @@
 - `kill_all_enemies` used by tests credits kills to the test player (test-only command, disabled by default).
 - Only OP-01 is playable; OP-02…07 are listed but locked.
 
+## Rooms / browser
+- No master-server list or LAN discovery: the server browser shows your Favorites and History (add servers by address).
+- Each active mission runs a full simulation (AI, navigation bake about 1 s at start); size `--max-rooms` to the host's CPU.
+- Drop-in to a room that is already in a mission is allowed while it has a free slot.
+
 ## Download website
 - Plain HTTP (no TLS). Put it behind a reverse proxy (nginx/Caddy) for HTTPS on public hosts.
 - No download resume (Range requests) or bandwidth limiting.

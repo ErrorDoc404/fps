@@ -18,6 +18,7 @@ extraction unlock; extraction with all active operators; mission completed; XP/c
 a client disconnecting mid-mission does not break the mission.
 
 | ARM64 server | Exported `blackout_server.arm64` run under qemu-aarch64 emulation, 4 bots | Mission completed. 44/45 checks pass; the walk-speed check missed (2.29 m/s) because of CPU load from emulation. Download site served the client |
+| Rooms / room browser | 6 clients, 3 rooms (exported build): Alpha 4/4, Bravo (password), Charlie (solo); 2 missions run at once | **93/93**: full room listed and join rejected, not-full / no-password / has-players / not-in-mission filters, wrong password rejected, empty room closed, both missions completed in isolated worlds |
 | Download website | Exported server zip unpacked → `curl` page/status/download, Chromium screenshot | 200 OK; 30 MB client zip downloaded at ~60 MB/s with an identical SHA-256; traversal/unknown files → 404, POST → 405 |
 
 ## Implemented (MVP scope)

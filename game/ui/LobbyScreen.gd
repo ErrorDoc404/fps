@@ -37,7 +37,8 @@ func _ready() -> void:
 	root.add_child(top)
 	var title := VBoxContainer.new()
 	title.add_child(UiKit.label("TASK FORCE BLACKOUT — OPERATIONS HQ", 28, UiKit.ACCENT, true))
-	title.add_child(UiKit.label("Dedicated server session · squad of up to 4", 14, UiKit.DIM))
+	var rinfo: Dictionary = Session.lobby.get("room", {})
+	title.add_child(UiKit.label("Room: %s%s · squad of up to %d" % [rinfo.get("name", ""), "  🔒" if rinfo.get("locked", false) else "", rinfo.get("max", 4)], 14, UiKit.DIM))
 	top.add_child(title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -45,7 +46,7 @@ func _ready() -> void:
 	_profile_box = HBoxContainer.new()
 	_profile_box.add_theme_constant_override("separation", 10)
 	top.add_child(_profile_box)
-	top.add_child(UiKit.button("LEAVE", func(): app.leave_session(), 120))
+	top.add_child(UiKit.button("LEAVE ROOM", func(): Session.request_leave_room(), 170))
 
 	var cols := HBoxContainer.new()
 	cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
