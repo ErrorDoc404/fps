@@ -17,6 +17,8 @@ enemy kill; reload; weapon switching; downed replication; revive by teammate; in
 extraction unlock; extraction with all active operators; mission completed; XP/credits granted and persisted; return to lobby;
 a client disconnecting mid-mission does not break the mission.
 
+| Download website | Exported server zip unpacked → `curl` page/status/download, Chromium screenshot | 200 OK; 30 MB client zip downloaded at ~60 MB/s with an identical SHA-256; traversal/unknown files → 404, POST → 405 |
+
 ## Implemented (MVP scope)
 - **FPS foundation:** first-person camera (FOV, sensitivity, invert, camera-motion slider), walk/sprint/crouch/prone/jump/ADS,
   stamina, encumbrance, first-person arms + weapon view models, sway/bob/recoil/ADS/reload/switch/sprint animation, muzzle flash.
@@ -40,5 +42,6 @@ See `KNOWN_ISSUES.md` and `TODO.md`: art/audio assets, skeletal animation, voice
 WAN hardening (lag compensation), controller look/UI navigation, OP-02…OP-07.
 
 ## How to launch
-See `BUILD_INSTRUCTIONS.md`. Quick: run `build/windows/OperationBlackout.exe` → DEPLOY (SOLO / LOCAL); or start
+See `BUILD_INSTRUCTIONS.md`. Server: unzip `dist/OperationBlackout-Server-Linux.zip`, run `./run_server.sh`, and share
+`http://<server-ip>:8080/` so players can download the client. Client: run `build/windows/OperationBlackout.exe` → DEPLOY (SOLO / LOCAL); or start
 `build/linux_server/run_server.sh --port=7777` and JOIN SERVER from up to four clients.

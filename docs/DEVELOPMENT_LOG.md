@@ -18,3 +18,9 @@
   - Auth secrets were keyed by address:port, so returning players were rejected on another port → keyed by a persistent server realm id.
   - Map randomness differed between client and server → fixed RNG seed for identical collision.
 - Verification: 45/45 co-op checks (source + exported Linux build), 30/30 in rendered 2-player session, persistence across runs.
+
+## 2026-10-31: Download website
+- Added `server/WebPortal.gd`: the dedicated server now hosts a download page (`--http-port`, default 8080) that serves the
+  Windows client zip from `<server dir>/downloads/`. `tools/build.sh` now produces `dist/OperationBlackout-Windows.zip` and
+  `dist/OperationBlackout-Server-Linux.zip` (the server bundle includes the client zip in `downloads/`).
+- Verified with the exported server: page, status JSON, full download with matching checksum, 404/405 handling; co-op regression 45/45.

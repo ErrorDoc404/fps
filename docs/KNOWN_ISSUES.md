@@ -24,6 +24,11 @@
 - `kill_all_enemies` used by tests credits kills to the test player (test-only command, disabled by default).
 - Only OP-01 is playable; OP-02…07 are listed but locked.
 
+## Download website
+- Plain HTTP (no TLS). Put it behind a reverse proxy (nginx/Caddy) for HTTPS on public hosts.
+- No download resume (Range requests) or bandwidth limiting.
+- `dist/` zips are committed to git (~85 MB). Move them to GitHub Releases or object storage once the repo is used long-term.
+
 ## Engine / tooling
 - Headless clients print `Parameter "m" is null` from Godot's dummy renderer (mesh queries with no GPU). Not present with a real renderer.
 - Windows build is cross-exported from Linux and has **not been launched on Windows** in this environment (no Windows/Wine available).

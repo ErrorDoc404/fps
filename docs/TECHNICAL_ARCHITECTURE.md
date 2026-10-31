@@ -93,6 +93,12 @@ checks). If the same profile reconnects it re-binds to its slot (`Session.discon
 Weapons, classes, equipment, enemies, missions/objectives/enemy groups/radio lines, progression curve/rewards and all player tuning
 (speeds, stamina, armor absorb, revive times) are JSON in `game/data/`. Adding a weapon or objective requires no code.
 
+## Download website (`server/WebPortal.gd`)
+The dedicated server embeds a minimal HTTP/1.1 server (Godot `TCPServer`, non-blocking, ≤32 connections, 30 s idle timeout,
+streams files in chunks of up to 1 MB per frame per connection). Routes: `/` (download page with live status and join instructions),
+`/status.json`, `/downloads/<name>`. Only GET/HEAD are accepted. A file is served only if its name exactly matches an entry in the
+downloads directory listing, so path traversal is not possible. Disable it with `--no-web`.
+
 ## Logging & operations
 `Log` emits `timestamp LEVEL [tag] message {json}`; `--log-file=` mirrors to a file. The server logs a health line every 30 s
 (members, phase, FPS, memory, object count) and handles SIGTERM/close via graceful shutdown that notifies clients.

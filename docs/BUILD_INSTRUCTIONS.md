@@ -14,12 +14,20 @@ Outputs:
 - `build/windows/OperationBlackout.exe` + `OperationBlackout.pck` — Windows x86_64 client
 - `build/linux_server/blackout_server.x86_64` + `.pck` + `run_server.sh` — Linux x86_64 dedicated server
 
-## Run the dedicated server (Linux)
+Packaged downloads (also committed in `dist/`):
+- `build/dist/OperationBlackout-Server-Linux.zip`: the server, `run_server.sh`, and `downloads/OperationBlackout-Windows.zip`
+- `build/dist/OperationBlackout-Windows.zip`: the client on its own
+
+## Run the dedicated server + download site (Linux)
 ```bash
-build/linux_server/run_server.sh --port=7777 --data-dir=/srv/blackout --log-file=/srv/blackout/server.log
+unzip OperationBlackout-Server-Linux.zip && cd OperationBlackout-Server
+./run_server.sh --port=7777 --http-port=8080 --data-dir=./server_data
 ```
-Options: `--port`, `--data-dir` (profiles + realm id), `--log-file`, `--exit-when-empty`, `--max-idle=<sec>`,
-`--allow-test-commands` (never in production), `--verbose`. Open UDP port 7777.
+Players open `http://<server-ip>:8080/`, download the Windows client, then JOIN SERVER `<server-ip>:7777`.
+The site shows live server status (`/status.json`) and serves every `.zip/.7z/.gz/.txt` in `./downloads/`.
+Options: `--port`, `--http-port` (default 8080), `--downloads-dir` (default `<exe dir>/downloads`), `--no-web`,
+`--data-dir` (profiles + realm id), `--log-file`, `--exit-when-empty`, `--max-idle=<sec>`,
+`--allow-test-commands` (never in production), `--verbose`. Open **UDP 7777** and **TCP 8080**.
 
 ## Run the client (Windows)
 Run `OperationBlackout.exe`. Main menu → **JOIN SERVER** → `host:7777`, or **DEPLOY (SOLO / LOCAL)** which launches a local

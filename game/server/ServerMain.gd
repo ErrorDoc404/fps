@@ -1,6 +1,7 @@
 extends Node
 ## Dedicated server process. Headless, Linux x86_64 target.
 ## Args: --port=7777 --data-dir=<path> --log-file=<path> --exit-when-empty --allow-test-commands --max-idle=<sec>
+##       --http-port=8080 (download website) --downloads-dir=<path> (default: <executable dir>/downloads) --no-web
 
 var _empty_since := -1.0
 var _had_players := false
@@ -19,6 +20,12 @@ func _ready() -> void:
 	Log.info("server", "Operation: Blackout dedicated server started", {"port": port, "version": ProjectSettings.get_setting("application/config/version"),
 		"engine": Engine.get_version_info()["string"], "test_commands": Args.has("allow-test-commands")})
 	get_tree().auto_accept_quit = false
+	if not Args.has("no-web"):
+		var web := preload("res://server/WebPortal.gd").new()
+		web.name = "WebPortal"
+		add_child(web)
+		var dl := Args.get_value("downloads-dir", OS.get_executable_path().get_base_dir().path_join("downloads"))
+		web.start(Args.get_int("http-port", 8080), port, dl)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
